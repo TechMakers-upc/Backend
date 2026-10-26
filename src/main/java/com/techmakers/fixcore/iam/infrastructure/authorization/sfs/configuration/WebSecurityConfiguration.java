@@ -14,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -32,13 +33,16 @@ public class WebSecurityConfiguration {
     private final TokenService tokenService;
     private final UserDetailsService userDetailsService;
     private final AuthenticationEntryPoint unauthorizedRequestHandler;
+    private final AccessDeniedHandler forbiddenRequestHandler;
 
     public WebSecurityConfiguration(TokenService tokenService,
                                     @Qualifier("defaultUserDetailsService") UserDetailsService userDetailsService,
-                                    AuthenticationEntryPoint unauthorizedRequestHandler) {
+                                    AuthenticationEntryPoint unauthorizedRequestHandler,
+                                    AccessDeniedHandler forbiddenRequestHandler) {
         this.tokenService = tokenService;
         this.userDetailsService = userDetailsService;
         this.unauthorizedRequestHandler = unauthorizedRequestHandler;
+        this.forbiddenRequestHandler = forbiddenRequestHandler;
     }
 
     @Bean
@@ -48,7 +52,9 @@ public class WebSecurityConfiguration {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(unauthorizedRequestHandler))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(unauthorizedRequestHandler)
+                        .accessDeniedHandler(forbiddenRequestHandler))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_PATHS).permitAll()
