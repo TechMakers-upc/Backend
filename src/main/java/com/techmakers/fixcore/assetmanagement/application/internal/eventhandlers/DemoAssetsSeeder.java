@@ -1,6 +1,7 @@
 package com.techmakers.fixcore.assetmanagement.application.internal.eventhandlers;
 
 import com.techmakers.fixcore.assetmanagement.domain.model.aggregates.Asset;
+import com.techmakers.fixcore.assetmanagement.domain.model.aggregates.Plant;
 import com.techmakers.fixcore.assetmanagement.domain.model.valueobjects.*;
 import com.techmakers.fixcore.assetmanagement.domain.repositories.AssetRepository;
 import com.techmakers.fixcore.assetmanagement.domain.repositories.PlantRepository;
@@ -25,7 +26,7 @@ public class DemoAssetsSeeder {
     private record DemoManual(String title, String url, Instant addedAt) {
     }
 
-    private record DemoAsset(Long plantId, String code, String name, String category, String criticality,
+    private record DemoAsset(String plantName, String code, String name, String category, String criticality,
                              String status, Instant statusChangedAt, String location, String brand, String model,
                              String serialNumber, LocalDate installedAt, String description, List<DemoManual> manuals) {
     }
@@ -45,19 +46,19 @@ public class DemoAssetsSeeder {
     public void seedDemoAssets() throws IOException {
         try (var input = new ClassPathResource("seed/demo-assets.json").getInputStream()) {
             List<DemoAsset> demoAssets = jsonMapper.readValue(input, new TypeReference<>() {});
-            demoAssets.stream()
-                    .filter(demo -> plantRepository.existsById(demo.plantId()))
-                    .filter(demo -> !assetRepository.existsByPlantIdAndCode(demo.plantId(), demo.code()))
-                    .forEach(demo -> assetRepository.save(toAsset(demo)));
+            demoAssets.forEach(demo -> plantRepository.findByName(demo.plantName())
+                    .map(Plant::getId)
+                    .filter(plantId -> !assetRepository.existsByPlantIdAndCode(plantId, demo.code()))
+                    .ifPresent(plantId -> assetRepository.save(toAsset(plantId, demo))));
         }
     }
 
-    private Asset toAsset(DemoAsset demo) {
+    private Asset toAsset(Long plantId, DemoAsset demo) {
         var details = new AssetDetails(demo.code(), demo.name(), AssetCategory.valueOf(demo.category().toUpperCase()),
                 Criticality.valueOf(demo.criticality().toUpperCase()), demo.location(), demo.brand(), demo.model(),
                 demo.serialNumber(), demo.installedAt(), demo.description());
         var manuals = demo.manuals().stream().map(m -> new Manual(m.title(), m.url(), m.addedAt())).toList();
-        return new Asset(null, demo.plantId(), details, AssetStatus.valueOf(demo.status().toUpperCase()),
+        return new Asset(null, plantId, details, AssetStatus.valueOf(demo.status().toUpperCase()),
                 demo.statusChangedAt(), manuals);
     }
 }

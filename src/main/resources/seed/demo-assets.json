@@ -1,6 +1,6 @@
 [
   {
-    "plantId": 1,
+    "plantName": "Planta Ate",
     "code": "CMP-01",
     "name": "Compresor de tornillo 30 HP",
     "category": "compressor",
@@ -22,7 +22,7 @@
     ]
   },
   {
-    "plantId": 1,
+    "plantName": "Planta Ate",
     "code": "PRH-02",
     "name": "Prensa hidráulica 80 t",
     "category": "press",
@@ -44,7 +44,7 @@
     ]
   },
   {
-    "plantId": 1,
+    "plantName": "Planta Ate",
     "code": "FJT-03",
     "name": "Faja transportadora B",
     "category": "conveyor",
@@ -60,7 +60,7 @@
     "manuals": []
   },
   {
-    "plantId": 1,
+    "plantName": "Planta Ate",
     "code": "ENV-04",
     "name": "Envasadora rotativa 12 cabezales",
     "category": "packaging",
@@ -76,7 +76,7 @@
     "manuals": []
   },
   {
-    "plantId": 1,
+    "plantName": "Planta Ate",
     "code": "BMB-05",
     "name": "Bomba de agua torre 3",
     "category": "pump",
@@ -92,7 +92,7 @@
     "manuals": []
   },
   {
-    "plantId": 1,
+    "plantName": "Planta Ate",
     "code": "TAB-06",
     "name": "Tablero general de baja tensión",
     "category": "electrical",
@@ -108,7 +108,7 @@
     "manuals": []
   },
   {
-    "plantId": 1,
+    "plantName": "Planta Ate",
     "code": "MZC-07",
     "name": "Mezcladora de tambor",
     "category": "mixer",
@@ -124,7 +124,7 @@
     "manuals": []
   },
   {
-    "plantId": 2,
+    "plantName": "Planta Callao",
     "code": "CMP-11",
     "name": "Compresor de pistón 15 HP",
     "category": "compressor",
@@ -140,7 +140,7 @@
     "manuals": []
   },
   {
-    "plantId": 2,
+    "plantName": "Planta Callao",
     "code": "ENV-12",
     "name": "Envasadora de sachets",
     "category": "packaging",
@@ -156,7 +156,7 @@
     "manuals": []
   },
   {
-    "plantId": 2,
+    "plantName": "Planta Callao",
     "code": "FJT-13",
     "name": "Faja de despacho",
     "category": "conveyor",
@@ -172,7 +172,7 @@
     "manuals": []
   },
   {
-    "plantId": 2,
+    "plantName": "Planta Callao",
     "code": "HVAC-14",
     "name": "Chiller de sala limpia",
     "category": "hvac",
@@ -188,7 +188,7 @@
     "manuals": []
   },
   {
-    "plantId": 3,
+    "plantName": "Planta Arequipa",
     "code": "PRH-21",
     "name": "Prensa de briquetas",
     "category": "press",
@@ -204,7 +204,7 @@
     "manuals": []
   },
   {
-    "plantId": 3,
+    "plantName": "Planta Arequipa",
     "code": "BMB-22",
     "name": "Bomba de lodos",
     "category": "pump",
