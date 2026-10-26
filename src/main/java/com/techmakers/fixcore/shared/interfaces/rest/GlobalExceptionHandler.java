@@ -1,5 +1,8 @@
 package com.techmakers.fixcore.shared.interfaces.rest;
 
+import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
+import com.techmakers.fixcore.shared.domain.exceptions.ResourceAlreadyExistsException;
+import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,5 +47,23 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex) {
+        var error = new ApiError(404, ex.getMessage(), Instant.now());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler({ResourceAlreadyExistsException.class, BusinessRuleViolationException.class})
+    public ResponseEntity<ApiError> handleConflict(RuntimeException ex) {
+        var error = new ApiError(409, ex.getMessage(), Instant.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+        var error = new ApiError(400, ex.getMessage(), Instant.now());
+        return ResponseEntity.badRequest().body(error);
     }
 }
