@@ -47,6 +47,32 @@ public class MaintenancePlan {
         this.details = details;
     }
 
+    public void reschedule(LocalDate nextDueDate) {
+        details = withNextDueDate(nextDueDate);
+    }
+
+    public void suspend() {
+        active = false;
+    }
+
+    public void reactivate(LocalDate today) {
+        active = true;
+        if (details.nextDueDate().isBefore(today)) {
+            details = withNextDueDate(today);
+        }
+    }
+
+    public void registerCompletion(LocalDate completedOn) {
+        if (completedOn == null) throw new IllegalArgumentException("Completion date is required");
+        lastCompletedAt = completedOn;
+        details = withNextDueDate(completedOn.plusDays(details.frequencyDays()));
+    }
+
+    private PlanDetails withNextDueDate(LocalDate nextDueDate) {
+        return new PlanDetails(details.assetId(), details.title(), details.tasks(), details.frequencyDays(),
+                nextDueDate, details.technicianId());
+    }
+
     public Long getId() { return id; }
 
     public Long getPlantId() { return plantId; }
