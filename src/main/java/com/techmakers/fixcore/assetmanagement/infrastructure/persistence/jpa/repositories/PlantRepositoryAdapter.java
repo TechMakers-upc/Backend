@@ -28,6 +28,11 @@ public class PlantRepositoryAdapter implements PlantRepository {
     }
 
     @Override
+    public Optional<Plant> findByName(String name) {
+        return plantJpaRepository.findByNameIgnoreCase(name.trim()).map(PlantPersistenceMapper::toDomain);
+    }
+
+    @Override
     public List<Plant> findAll() {
         return plantJpaRepository.findAllByOrderByNameAsc().stream().map(PlantPersistenceMapper::toDomain).toList();
     }

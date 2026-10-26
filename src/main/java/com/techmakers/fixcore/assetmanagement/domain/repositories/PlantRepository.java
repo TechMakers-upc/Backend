@@ -11,6 +11,8 @@ public interface PlantRepository {
 
     Optional<Plant> findById(Long id);
 
+    Optional<Plant> findByName(String name);
+
     List<Plant> findAll();
 
     boolean existsById(Long id);
