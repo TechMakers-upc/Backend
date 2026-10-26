@@ -2,6 +2,7 @@ package com.techmakers.fixcore.inventory.domain.model.aggregates;
 
 import com.techmakers.fixcore.inventory.domain.model.valueobjects.SparePartDetails;
 import com.techmakers.fixcore.inventory.domain.model.valueobjects.StockLevel;
+import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 
 public class SparePart {
 
@@ -36,6 +37,24 @@ public class SparePart {
     public void updateDetails(SparePartDetails details) {
         if (details == null) throw new IllegalArgumentException("Part details are required");
         this.details = details;
+    }
+
+    public void receive(int quantity) {
+        if (quantity < 1) throw new IllegalArgumentException("Entries must add at least one unit");
+        stock += quantity;
+    }
+
+    public int adjustTo(int counted) {
+        if (counted < 0) throw new IllegalArgumentException("Quantities are whole, non-negative numbers");
+        var delta = counted - stock;
+        stock = counted;
+        return delta;
+    }
+
+    public void consume(int quantity) {
+        if (quantity < 1) throw new IllegalArgumentException("Consumption must be at least one unit");
+        if (quantity > stock) throw new BusinessRuleViolationException("Not enough stock");
+        stock -= quantity;
     }
 
     public Long getId() { return id; }
