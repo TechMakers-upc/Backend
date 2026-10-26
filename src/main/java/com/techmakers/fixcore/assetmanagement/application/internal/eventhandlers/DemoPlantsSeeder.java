@@ -6,6 +6,7 @@ import com.techmakers.fixcore.assetmanagement.domain.services.PlantCommandServic
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class DemoPlantsSeeder {
         this.plantCommandService = plantCommandService;
     }
 
+    @Order(1)
     @EventListener(ApplicationReadyEvent.class)
     public void seedDemoPlants() {
         DEMO_PLANTS.stream()
