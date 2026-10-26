@@ -1,0 +1,112 @@
+[
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "CMP-01",
+    "technicianEmail": "jose.ramirez@fixcore.demo",
+    "title": "Cambio de filtros y aceite",
+    "tasks": "Cambiar filtro de aceite\nCambiar separador\nCambiar aceite (18 L)",
+    "frequencyDays": 30,
+    "nextDueDate": "2026-10-07",
+    "lastCompletedAt": "2026-09-07",
+    "active": true
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "ENV-04",
+    "technicianEmail": "jose.ramirez@fixcore.demo",
+    "title": "Lubricación y ajuste de mordazas",
+    "tasks": "Lubricar guías y cadena\nRevisar mordazas\nAjustar presión de sellado",
+    "frequencyDays": 15,
+    "nextDueDate": "2026-10-06",
+    "lastCompletedAt": "2026-09-21",
+    "active": true
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "FJT-03",
+    "technicianEmail": "miguel.torres@fixcore.demo",
+    "title": "Revisión de faja y rodillos",
+    "tasks": "Revisar tensión\nRevisar rodillos de retorno\nLimpiar sensores",
+    "frequencyDays": 30,
+    "nextDueDate": "2026-10-27",
+    "lastCompletedAt": "2026-09-27",
+    "active": true
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "PRH-02",
+    "technicianEmail": "miguel.torres@fixcore.demo",
+    "title": "Cambio de sellos hidráulicos",
+    "tasks": "Cambiar sellos del cilindro\nAnalizar aceite",
+    "frequencyDays": 90,
+    "nextDueDate": "2026-10-02",
+    "lastCompletedAt": "2026-07-04",
+    "active": true
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "TAB-06",
+    "technicianEmail": null,
+    "title": "Termografía del tablero general",
+    "tasks": "Termografía con carga\nReapriete de bornes",
+    "frequencyDays": 180,
+    "nextDueDate": "2026-10-10",
+    "lastCompletedAt": "2026-04-13",
+    "active": true
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "BMB-05",
+    "technicianEmail": "miguel.torres@fixcore.demo",
+    "title": "Revisión de bomba y alineamiento",
+    "tasks": "Medir vibración\nRevisar alineamiento\nEngrasar rodamientos",
+    "frequencyDays": 60,
+    "nextDueDate": "2026-11-14",
+    "lastCompletedAt": "2026-09-15",
+    "active": true
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "MZC-07",
+    "technicianEmail": null,
+    "title": "Cambio de aceite del reductor",
+    "tasks": "Cambiar aceite del reductor",
+    "frequencyDays": 90,
+    "nextDueDate": "2026-09-05",
+    "lastCompletedAt": "2026-06-07",
+    "active": false
+  },
+  {
+    "plantName": "Planta Callao",
+    "assetCode": "CMP-11",
+    "technicianEmail": "rosa.quispe@fixcore.demo",
+    "title": "Purga y revisión de válvulas",
+    "tasks": "Purgar tanque\nProbar válvula de alivio",
+    "frequencyDays": 30,
+    "nextDueDate": "2026-10-17",
+    "lastCompletedAt": "2026-09-17",
+    "active": true
+  },
+  {
+    "plantName": "Planta Callao",
+    "assetCode": "HVAC-14",
+    "technicianEmail": "rosa.quispe@fixcore.demo",
+    "title": "Limpieza de serpentines",
+    "tasks": "Lavar serpentines\nRevisar carga de refrigerante",
+    "frequencyDays": 90,
+    "nextDueDate": "2026-10-03",
+    "lastCompletedAt": "2026-07-05",
+    "active": true
+  },
+  {
+    "plantName": "Planta Arequipa",
+    "assetCode": "PRH-21",
+    "technicianEmail": "luis.huaman@fixcore.demo",
+    "title": "Revisión de presión y mangueras",
+    "tasks": "Revisar mangueras\nComprobar presión de trabajo",
+    "frequencyDays": 30,
+    "nextDueDate": "2026-10-14",
+    "lastCompletedAt": "2026-09-14",
+    "active": true
+  }
+]
