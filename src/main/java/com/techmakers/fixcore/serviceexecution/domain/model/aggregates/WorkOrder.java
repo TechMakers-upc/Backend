@@ -1,6 +1,7 @@
 package com.techmakers.fixcore.serviceexecution.domain.model.aggregates;
 
 import com.techmakers.fixcore.serviceexecution.domain.model.valueobjects.*;
+import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -71,6 +72,47 @@ public class WorkOrder {
     public Double repairHours() {
         if (startedAt == null || completedAt == null) return null;
         return Duration.between(startedAt, completedAt).toMinutes() / 60.0;
+    }
+
+    public void updateDetails(WorkOrderDetails details) {
+        if (!isOpen()) throw new BusinessRuleViolationException("Completed work orders are read-only");
+        if (details == null) throw new IllegalArgumentException("Work order details are required");
+        this.details = details;
+    }
+
+    public void assign(Long technicianId) {
+        if (!isOpen()) throw new BusinessRuleViolationException("Completed work orders cannot be reassigned");
+        if (technicianId == null) throw new IllegalArgumentException("Technician is required");
+        this.technicianId = technicianId;
+    }
+
+    public void start(Instant at) {
+        if (status != WorkOrderStatus.PENDING) throw new BusinessRuleViolationException("Only pending work orders can start");
+        if (technicianId == null) throw new BusinessRuleViolationException("Assign a technician first");
+        status = WorkOrderStatus.IN_PROGRESS;
+        startedAt = at;
+    }
+
+    public void logWork(String note, Long authorId, Instant at) {
+        ensureInProgress("Work can only be logged while the order is in progress");
+        workLog.add(new WorkLogEntry(at, authorId, note));
+    }
+
+    public void registerPartUsage(Long partId, int quantity, Instant at) {
+        ensureInProgress("Parts can only be logged while the order is in progress");
+        partsUsed.add(new PartUsage(partId, quantity, at));
+    }
+
+    public void complete(String solution, Instant at) {
+        ensureInProgress("Start the work order before closing it");
+        if (solution == null || solution.isBlank()) throw new IllegalArgumentException("Describe the work done");
+        status = WorkOrderStatus.COMPLETED;
+        completedAt = at;
+        this.solution = solution.trim();
+    }
+
+    private void ensureInProgress(String message) {
+        if (status != WorkOrderStatus.IN_PROGRESS) throw new BusinessRuleViolationException(message);
     }
 
     public Long getId() { return id; }
