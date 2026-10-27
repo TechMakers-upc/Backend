@@ -13,6 +13,4 @@ COPY --from=build /workspace/target/fixcore-backend-*.jar app.jar
 USER fixcore
 ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:${PORT:-8080}/actuator/health || exit 1
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.jar"]
