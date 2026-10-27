@@ -3,6 +3,7 @@ package com.techmakers.fixcore.serviceexecution.domain.model.aggregates;
 import com.techmakers.fixcore.serviceexecution.domain.model.valueobjects.FailureKind;
 import com.techmakers.fixcore.serviceexecution.domain.model.valueobjects.FailureStatus;
 import com.techmakers.fixcore.serviceexecution.domain.model.valueobjects.Priority;
+import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -62,6 +63,26 @@ public class Failure {
         if (!lineStopped) return 0;
         var end = resolvedAt == null ? now : resolvedAt;
         return Duration.between(reportedAt, end).toMinutes() / 60.0;
+    }
+
+    public void prioritize(Priority priority) {
+        if (priority == null) throw new IllegalArgumentException("Priority is required");
+        if (isResolved()) throw new BusinessRuleViolationException("Resolved failures cannot be re-prioritized");
+        this.priority = priority;
+    }
+
+    public void attachWorkOrder(Long workOrderId) {
+        if (workOrderId == null) throw new IllegalArgumentException("Work order identifier is required");
+        if (this.workOrderId != null) throw new BusinessRuleViolationException("This failure already has a work order");
+        this.workOrderId = workOrderId;
+        this.status = FailureStatus.IN_PROGRESS;
+    }
+
+    public void resolve(Instant at) {
+        if (at == null) throw new IllegalArgumentException("Resolution date is required");
+        if (isResolved()) throw new BusinessRuleViolationException("This failure is already resolved");
+        this.status = FailureStatus.RESOLVED;
+        this.resolvedAt = at;
     }
 
     public Long getId() { return id; }
