@@ -4,11 +4,14 @@ import com.techmakers.fixcore.serviceplanning.domain.model.aggregates.Maintenanc
 import com.techmakers.fixcore.serviceplanning.domain.model.commands.RegisterPlanCompletionCommand;
 import com.techmakers.fixcore.serviceplanning.domain.model.queries.GetMaintenancePlanByIdQuery;
 import com.techmakers.fixcore.serviceplanning.domain.model.queries.GetMaintenancePlansByAssetIdQuery;
+import com.techmakers.fixcore.serviceplanning.domain.model.queries.GetMaintenancePlansByPlantIdQuery;
 import com.techmakers.fixcore.serviceplanning.domain.services.MaintenancePlanCommandService;
 import com.techmakers.fixcore.serviceplanning.domain.services.MaintenancePlanQueryService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -36,5 +39,14 @@ public class PlanningContextFacade {
                 .filter(plan -> plan.getDetails().title().equalsIgnoreCase(title.trim()))
                 .map(MaintenancePlan::getId)
                 .findFirst();
+    }
+
+    public List<PlanSummary> fetchPlansOfPlants(Collection<Long> plantIds) {
+        var today = LocalDate.now();
+        return plantIds.stream()
+                .flatMap(plantId -> planQueryService.handle(new GetMaintenancePlansByPlantIdQuery(plantId)).stream())
+                .map(plan -> new PlanSummary(plan.getId(), plan.getPlantId(), plan.getDetails().assetId(),
+                        plan.getDetails().title(), plan.getDetails().nextDueDate(), plan.standing(today).name()))
+                .toList();
     }
 }
