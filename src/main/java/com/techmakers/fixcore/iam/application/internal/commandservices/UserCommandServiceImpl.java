@@ -1,5 +1,6 @@
 package com.techmakers.fixcore.iam.application.internal.commandservices;
 
+import com.techmakers.fixcore.iam.application.outboundservices.acl.PlantDirectory;
 import com.techmakers.fixcore.iam.application.outboundservices.hashing.HashingService;
 import com.techmakers.fixcore.iam.application.outboundservices.tokens.TokenService;
 import com.techmakers.fixcore.iam.domain.exceptions.InvalidCredentialsException;
@@ -10,6 +11,7 @@ import com.techmakers.fixcore.iam.domain.model.valueobjects.AuthenticatedUser;
 import com.techmakers.fixcore.iam.domain.repositories.UserRepository;
 import com.techmakers.fixcore.iam.domain.services.UserCommandService;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceAlreadyExistsException;
+import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +21,14 @@ public class UserCommandServiceImpl implements UserCommandService {
     private final UserRepository userRepository;
     private final HashingService hashingService;
     private final TokenService tokenService;
+    private final PlantDirectory plantDirectory;
 
-    public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService) {
+    public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService,
+                                  PlantDirectory plantDirectory) {
         this.userRepository = userRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
+        this.plantDirectory = plantDirectory;
     }
 
     @Override
@@ -31,6 +36,9 @@ public class UserCommandServiceImpl implements UserCommandService {
     public User handle(SignUpCommand command) {
         if (userRepository.existsByEmail(command.email())) {
             throw new ResourceAlreadyExistsException("User", "email", command.email().address());
+        }
+        if (command.plantId() != null && !plantDirectory.exists(command.plantId())) {
+            throw new ResourceNotFoundException("Plant", command.plantId());
         }
         var user = new User(command.email(), hashingService.encode(command.password()), command.fullName(),
                 command.jobTitle(), command.plantId(), command.role());
