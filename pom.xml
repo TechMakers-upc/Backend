@@ -10,7 +10,7 @@
   </parent>
   <groupId>com.techmakers</groupId>
   <artifactId>fixcore-backend</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>FixCoreBackend</name>
   <description />
   <url />
