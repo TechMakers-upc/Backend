@@ -13,6 +13,8 @@ import com.techmakers.fixcore.assetmanagement.domain.services.AssetQueryService;
 import com.techmakers.fixcore.assetmanagement.domain.services.PlantQueryService;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -56,6 +58,18 @@ public class AssetsContextFacade {
                 .filter(plant -> plant.getName().equalsIgnoreCase(plantName.trim()))
                 .map(Plant::getId)
                 .findFirst();
+    }
+
+    public List<Long> fetchAllPlantIds() {
+        return plantQueryService.handle(new GetAllPlantsQuery()).stream().map(Plant::getId).toList();
+    }
+
+    public List<AssetSummary> fetchAssetsOfPlants(Collection<Long> plantIds) {
+        return plantIds.stream()
+                .flatMap(plantId -> assetQueryService.handle(new GetAssetsByPlantIdQuery(plantId)).stream())
+                .map(asset -> new AssetSummary(asset.getId(), asset.getPlantId(), asset.getDetails().name(),
+                        asset.getStatus().name()))
+                .toList();
     }
 
     public Optional<Long> fetchAssetIdByPlantAndCode(Long plantId, String assetCode) {

@@ -7,6 +7,8 @@ import com.techmakers.fixcore.shared.domain.exceptions.PlantAccessDeniedExceptio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class SecurityContextPlantAccessGuard implements PlantAccessGuard {
 
@@ -14,14 +16,19 @@ public class SecurityContextPlantAccessGuard implements PlantAccessGuard {
 
     @Override
     public void ensureAccessTo(Long plantId) {
+        restrictedPlantId().filter(ownPlant -> !ownPlant.equals(plantId)).ifPresent(ownPlant -> {
+            throw new PlantAccessDeniedException(plantId);
+        });
+    }
+
+    @Override
+    public Optional<Long> restrictedPlantId() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof UserDetailsImpl user)) {
-            return;
+            return Optional.empty();
         }
         var global = user.getAuthorities().stream()
                 .anyMatch(authority -> OPERATIONS_MANAGER.equals(authority.getAuthority()));
-        if (!global && !plantId.equals(user.getPlantId())) {
-            throw new PlantAccessDeniedException(plantId);
-        }
+        return global ? Optional.empty() : Optional.of(user.getPlantId() == null ? -1L : user.getPlantId());
     }
 }

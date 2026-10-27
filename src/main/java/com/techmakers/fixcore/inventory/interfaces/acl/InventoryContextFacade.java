@@ -8,6 +8,8 @@ import com.techmakers.fixcore.inventory.domain.model.queries.GetSparePartsByPlan
 import com.techmakers.fixcore.inventory.domain.services.SparePartQueryService;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -34,5 +36,13 @@ public class InventoryContextFacade {
                 .filter(part -> part.getDetails().sku().equalsIgnoreCase(sku.trim()))
                 .map(SparePart::getId)
                 .findFirst();
+    }
+
+    public List<PartSummary> fetchPartsOfPlants(Collection<Long> plantIds) {
+        return plantIds.stream()
+                .flatMap(plantId -> partQueryService.handle(new GetSparePartsByPlantIdQuery(plantId)).stream())
+                .map(part -> new PartSummary(part.getId(), part.getPlantId(), part.getDetails().name(), part.getStock(),
+                        part.getDetails().minStock(), part.level().name()))
+                .toList();
     }
 }
