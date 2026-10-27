@@ -1,6 +1,8 @@
 package com.techmakers.fixcore.inventory.interfaces.acl;
 
 import com.techmakers.fixcore.inventory.domain.model.aggregates.SparePart;
+import com.techmakers.fixcore.inventory.domain.model.commands.ConsumeStockCommand;
+import com.techmakers.fixcore.inventory.domain.services.StockCommandService;
 import com.techmakers.fixcore.inventory.domain.model.queries.GetSparePartByIdQuery;
 import com.techmakers.fixcore.inventory.domain.model.queries.GetSparePartsByPlantIdQuery;
 import com.techmakers.fixcore.inventory.domain.services.SparePartQueryService;
@@ -12,9 +14,15 @@ import java.util.Optional;
 public class InventoryContextFacade {
 
     private final SparePartQueryService partQueryService;
+    private final StockCommandService stockCommandService;
 
-    public InventoryContextFacade(SparePartQueryService partQueryService) {
+    public InventoryContextFacade(SparePartQueryService partQueryService, StockCommandService stockCommandService) {
         this.partQueryService = partQueryService;
+        this.stockCommandService = stockCommandService;
+    }
+
+    public void consumeStock(Long partId, int quantity, Long workOrderId, String reason, String performedBy) {
+        stockCommandService.handle(new ConsumeStockCommand(partId, quantity, workOrderId, reason, performedBy));
     }
 
     public Optional<Long> fetchPlantIdOfPart(Long partId) {
