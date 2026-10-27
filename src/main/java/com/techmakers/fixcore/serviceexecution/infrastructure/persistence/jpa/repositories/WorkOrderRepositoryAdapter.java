@@ -2,6 +2,7 @@ package com.techmakers.fixcore.serviceexecution.infrastructure.persistence.jpa.r
 
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder;
 import com.techmakers.fixcore.serviceexecution.domain.model.valueobjects.WorkOrderCode;
+import com.techmakers.fixcore.serviceexecution.domain.model.valueobjects.WorkOrderStatus;
 import com.techmakers.fixcore.serviceexecution.domain.repositories.WorkOrderRepository;
 import com.techmakers.fixcore.serviceexecution.infrastructure.persistence.jpa.entities.WorkOrderEntity;
 import com.techmakers.fixcore.serviceexecution.infrastructure.persistence.jpa.mappers.WorkOrderPersistenceMapper;
@@ -49,6 +50,12 @@ public class WorkOrderRepositoryAdapter implements WorkOrderRepository {
     @Override
     public boolean existsByCode(WorkOrderCode code) {
         return workOrderJpaRepository.existsByCode(code.value());
+    }
+
+    @Override
+    public boolean existsOtherInProgressForAsset(Long assetId, Long excludedWorkOrderId) {
+        return workOrderJpaRepository.existsByAssetIdAndStatusAndIdNot(assetId, WorkOrderStatus.IN_PROGRESS,
+                excludedWorkOrderId);
     }
 
     @Override

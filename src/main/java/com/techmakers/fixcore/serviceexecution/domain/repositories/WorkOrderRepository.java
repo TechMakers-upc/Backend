@@ -20,5 +20,7 @@ public interface WorkOrderRepository {
 
     boolean existsByCode(WorkOrderCode code);
 
+    boolean existsOtherInProgressForAsset(Long assetId, Long excludedWorkOrderId);
+
     void deleteById(Long id);
 }

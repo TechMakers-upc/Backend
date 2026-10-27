@@ -1,5 +1,6 @@
 package com.techmakers.fixcore.serviceexecution.infrastructure.persistence.jpa.repositories;
 
+import com.techmakers.fixcore.serviceexecution.domain.model.valueobjects.WorkOrderStatus;
 import com.techmakers.fixcore.serviceexecution.infrastructure.persistence.jpa.entities.WorkOrderEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,4 +16,6 @@ public interface WorkOrderJpaRepository extends JpaRepository<WorkOrderEntity, L
     Optional<WorkOrderEntity> findTopByCodeStartingWithOrderByCodeDesc(String prefix);
 
     boolean existsByCode(String code);
+
+    boolean existsByAssetIdAndStatusAndIdNot(Long assetId, WorkOrderStatus status, Long id);
 }
