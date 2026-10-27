@@ -6,7 +6,9 @@ import com.techmakers.fixcore.inventory.domain.model.commands.CreateSparePartCom
 import com.techmakers.fixcore.inventory.domain.model.commands.DeleteSparePartCommand;
 import com.techmakers.fixcore.inventory.domain.model.commands.UpdateSparePartDetailsCommand;
 import com.techmakers.fixcore.inventory.domain.repositories.SparePartRepository;
+import com.techmakers.fixcore.inventory.domain.repositories.StockMovementRepository;
 import com.techmakers.fixcore.inventory.domain.services.SparePartCommandService;
+import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceAlreadyExistsException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -17,10 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class SparePartCommandServiceImpl implements SparePartCommandService {
 
     private final SparePartRepository partRepository;
+    private final StockMovementRepository movementRepository;
     private final PlantCatalog plantCatalog;
 
-    public SparePartCommandServiceImpl(SparePartRepository partRepository, PlantCatalog plantCatalog) {
+    public SparePartCommandServiceImpl(SparePartRepository partRepository, StockMovementRepository movementRepository,
+                                       PlantCatalog plantCatalog) {
         this.partRepository = partRepository;
+        this.movementRepository = movementRepository;
         this.plantCatalog = plantCatalog;
     }
 
@@ -50,6 +55,9 @@ public class SparePartCommandServiceImpl implements SparePartCommandService {
     public void handle(DeleteSparePartCommand command) {
         if (!partRepository.existsById(command.partId())) {
             throw new ResourceNotFoundException("SparePart", command.partId());
+        }
+        if (movementRepository.existsByPartId(command.partId())) {
+            throw new BusinessRuleViolationException("A spare part with stock movements cannot be deleted");
         }
         partRepository.deleteById(command.partId());
     }

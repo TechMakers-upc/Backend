@@ -2,12 +2,14 @@ package com.techmakers.fixcore.inventory.interfaces.rest;
 
 import com.techmakers.fixcore.inventory.domain.model.aggregates.SparePart;
 import com.techmakers.fixcore.inventory.domain.model.commands.DeleteSparePartCommand;
+import com.techmakers.fixcore.inventory.domain.model.commands.ReceiveStockCommand;
 import com.techmakers.fixcore.inventory.domain.model.queries.GetAllSparePartsQuery;
 import com.techmakers.fixcore.inventory.domain.model.queries.GetSparePartByIdQuery;
 import com.techmakers.fixcore.inventory.domain.model.queries.GetSparePartsBelowMinimumQuery;
 import com.techmakers.fixcore.inventory.domain.model.queries.GetSparePartsByPlantIdQuery;
 import com.techmakers.fixcore.inventory.domain.services.SparePartCommandService;
 import com.techmakers.fixcore.inventory.domain.services.SparePartQueryService;
+import com.techmakers.fixcore.inventory.domain.services.StockCommandService;
 import com.techmakers.fixcore.inventory.interfaces.rest.resources.SaveSparePartResource;
 import com.techmakers.fixcore.inventory.interfaces.rest.resources.SparePartResource;
 import com.techmakers.fixcore.inventory.interfaces.rest.transform.SparePartResourceAssembler;
@@ -21,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -28,12 +31,17 @@ import java.util.List;
 @Tag(name = "Spare Parts", description = "Spare parts inventory endpoints")
 public class SparePartsController {
 
+    private static final String INITIAL_STOCK_REASON = "initial-stock";
+
     private final SparePartCommandService partCommandService;
     private final SparePartQueryService partQueryService;
+    private final StockCommandService stockCommandService;
 
-    public SparePartsController(SparePartCommandService partCommandService, SparePartQueryService partQueryService) {
+    public SparePartsController(SparePartCommandService partCommandService, SparePartQueryService partQueryService,
+                                StockCommandService stockCommandService) {
         this.partCommandService = partCommandService;
         this.partQueryService = partQueryService;
+        this.stockCommandService = stockCommandService;
     }
 
     @GetMapping
@@ -58,8 +66,13 @@ public class SparePartsController {
     @PostMapping
     @PreAuthorize("hasRole('PLANT_MANAGER')")
     @Operation(summary = "Register a spare part in a plant inventory")
-    public ResponseEntity<SparePartResource> createSparePart(@Valid @RequestBody SaveSparePartResource resource) {
+    public ResponseEntity<SparePartResource> createSparePart(@Valid @RequestBody SaveSparePartResource resource,
+                                                             Principal principal) {
         var part = partCommandService.handle(SparePartResourceAssembler.toCreateCommand(resource));
+        if (resource.initialStock() != null && resource.initialStock() > 0) {
+            part = stockCommandService.handle(new ReceiveStockCommand(part.getId(), resource.initialStock(),
+                    INITIAL_STOCK_REASON, principal.getName()));
+        }
         var location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(part.getId()).toUri();
         return ResponseEntity.created(location).body(SparePartResourceAssembler.toResource(part));
