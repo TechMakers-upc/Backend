@@ -5,6 +5,7 @@ import com.techmakers.fixcore.assetmanagement.domain.model.aggregates.Plant;
 import com.techmakers.fixcore.assetmanagement.domain.model.queries.GetAllPlantsQuery;
 import com.techmakers.fixcore.assetmanagement.domain.model.queries.GetAssetByIdQuery;
 import com.techmakers.fixcore.assetmanagement.domain.model.queries.GetAssetsByPlantIdQuery;
+import com.techmakers.fixcore.assetmanagement.domain.model.queries.GetPlantByIdQuery;
 import com.techmakers.fixcore.assetmanagement.domain.services.AssetQueryService;
 import com.techmakers.fixcore.assetmanagement.domain.services.PlantQueryService;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,10 @@ public class AssetsContextFacade {
 
     public Optional<Long> fetchPlantIdOfAsset(Long assetId) {
         return assetQueryService.handle(new GetAssetByIdQuery(assetId)).map(Asset::getPlantId);
+    }
+
+    public boolean existsPlant(Long plantId) {
+        return plantQueryService.handle(new GetPlantByIdQuery(plantId)).isPresent();
     }
 
     public Optional<Long> fetchPlantIdByName(String plantName) {
