@@ -1,20 +1,30 @@
 package com.techmakers.fixcore.serviceplanning.interfaces.acl;
 
 import com.techmakers.fixcore.serviceplanning.domain.model.aggregates.MaintenancePlan;
+import com.techmakers.fixcore.serviceplanning.domain.model.commands.RegisterPlanCompletionCommand;
 import com.techmakers.fixcore.serviceplanning.domain.model.queries.GetMaintenancePlanByIdQuery;
 import com.techmakers.fixcore.serviceplanning.domain.model.queries.GetMaintenancePlansByAssetIdQuery;
+import com.techmakers.fixcore.serviceplanning.domain.services.MaintenancePlanCommandService;
 import com.techmakers.fixcore.serviceplanning.domain.services.MaintenancePlanQueryService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Service
 public class PlanningContextFacade {
 
     private final MaintenancePlanQueryService planQueryService;
+    private final MaintenancePlanCommandService planCommandService;
 
-    public PlanningContextFacade(MaintenancePlanQueryService planQueryService) {
+    public PlanningContextFacade(MaintenancePlanQueryService planQueryService,
+                                 MaintenancePlanCommandService planCommandService) {
         this.planQueryService = planQueryService;
+        this.planCommandService = planCommandService;
+    }
+
+    public void registerPlanCompletion(Long planId, LocalDate completedOn) {
+        planCommandService.handle(new RegisterPlanCompletionCommand(planId, completedOn));
     }
 
     public Optional<Long> fetchAssetIdOfPlan(Long planId) {

@@ -90,6 +90,14 @@ class StockOperationsControllerTests {
                 .andExpect(status().isConflict());
     }
 
+    @Test
+    void shouldRejectStockOperationsOnAnotherPlant() throws Exception {
+        Integer callaoPart = JsonPath.<List<Integer>>read(read("/api/v1/spare-parts"), "$[?(@.sku == 'MRD-SVE')].id").getFirst();
+        mockMvc.perform(post("/api/v1/spare-parts/" + callaoPart + "/entries").header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":10,\"reason\":\"OC-901\"}"))
+                .andExpect(status().isForbidden());
+    }
+
     private Integer createPart(String sku, int initialStock) throws Exception {
         var created = mockMvc.perform(post("/api/v1/spare-parts").header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON).content("""

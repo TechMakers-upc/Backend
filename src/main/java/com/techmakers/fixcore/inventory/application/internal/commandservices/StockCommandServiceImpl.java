@@ -9,6 +9,7 @@ import com.techmakers.fixcore.inventory.domain.model.commands.ReceiveStockComman
 import com.techmakers.fixcore.inventory.domain.repositories.SparePartRepository;
 import com.techmakers.fixcore.inventory.domain.repositories.StockMovementRepository;
 import com.techmakers.fixcore.inventory.domain.services.StockCommandService;
+import com.techmakers.fixcore.shared.application.security.PlantAccessGuard;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +23,14 @@ public class StockCommandServiceImpl implements StockCommandService {
     private final SparePartRepository partRepository;
     private final StockMovementRepository movementRepository;
     private final UserDirectory userDirectory;
+    private final PlantAccessGuard plantAccessGuard;
 
     public StockCommandServiceImpl(SparePartRepository partRepository, StockMovementRepository movementRepository,
-                                   UserDirectory userDirectory) {
+                                   UserDirectory userDirectory, PlantAccessGuard plantAccessGuard) {
         this.partRepository = partRepository;
         this.movementRepository = movementRepository;
         this.userDirectory = userDirectory;
+        this.plantAccessGuard = plantAccessGuard;
     }
 
     @Override
@@ -61,7 +64,9 @@ public class StockCommandServiceImpl implements StockCommandService {
     }
 
     private SparePart findPart(Long partId) {
-        return partRepository.findById(partId).orElseThrow(() -> new ResourceNotFoundException("SparePart", partId));
+        var part = partRepository.findById(partId).orElseThrow(() -> new ResourceNotFoundException("SparePart", partId));
+        plantAccessGuard.ensureAccessTo(part.getPlantId());
+        return part;
     }
 
     private Long userOf(String email) {

@@ -1,5 +1,7 @@
 package com.techmakers.fixcore.iam.interfaces.rest;
 
+import com.techmakers.fixcore.iam.application.outboundservices.acl.PlantDirectory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "fixcore.seed.demo-plants.enabled=true")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AuthenticationControllerTests {
@@ -25,13 +27,27 @@ class AuthenticationControllerTests {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private PlantDirectory plantDirectory;
+
+    private String ate;
+    private String callao;
+    private String arequipa;
+
+    @BeforeEach
+    void setUp() {
+        ate = plantIdOf("Planta Ate");
+        callao = plantIdOf("Planta Callao");
+        arequipa = plantIdOf("Planta Arequipa");
+    }
+
     @Test
     void shouldSignUpAndSignIn() throws Exception {
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("rosa@fixcore.com", "technician", "2")))
+        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("rosa@fixcore.com", "technician", callao)))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/api/v1/users/")))
                 .andExpect(jsonPath("$.role").value("technician"))
-                .andExpect(jsonPath("$.plantId").value(2))
+                .andExpect(jsonPath("$.plantId").value(Integer.valueOf(callao)))
                 .andExpect(jsonPath("$.password").doesNotExist());
 
         mockMvc.perform(post(SIGN_IN).contentType(MediaType.APPLICATION_JSON)
@@ -43,7 +59,7 @@ class AuthenticationControllerTests {
 
     @Test
     void shouldRejectDuplicateEmail() throws Exception {
-        var body = signUpBody("duplicate@fixcore.com", "plant-manager", "1");
+        var body = signUpBody("duplicate@fixcore.com", "plant-manager", ate);
         mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated());
         mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isConflict());
     }
@@ -55,20 +71,30 @@ class AuthenticationControllerTests {
     }
 
     @Test
+    void shouldRejectUnknownPlant() throws Exception {
+        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("ghost@fixcore.com", "technician", "999999")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void shouldRejectUnknownRole() throws Exception {
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("admin@fixcore.com", "admin", "1")))
+        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("admin@fixcore.com", "admin", ate)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldRejectWrongPassword() throws Exception {
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("luis@fixcore.com", "technician", "3")))
+        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("luis@fixcore.com", "technician", arequipa)))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post(SIGN_IN).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"luis@fixcore.com\",\"password\":\"wrong-password\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Email or password is incorrect"));
+    }
+
+    private String plantIdOf(String name) {
+        return plantDirectory.plantIdByName(name).orElseThrow().toString();
     }
 
     private String signUpBody(String email, String role, String plantId) {

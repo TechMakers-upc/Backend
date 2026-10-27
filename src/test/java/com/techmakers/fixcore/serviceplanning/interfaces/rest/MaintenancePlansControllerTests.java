@@ -95,6 +95,16 @@ class MaintenancePlansControllerTests {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void shouldRejectPlansForAnotherPlant() throws Exception {
+        var assets = read("/api/v1/assets");
+        Integer ownPlant = JsonPath.<List<Integer>>read(assets, "$[?(@.code == 'CMP-01')].plantId").getFirst();
+        Integer foreignAsset = JsonPath.<List<Integer>>read(assets, "$[?(@.plantId != %d)].id".formatted(ownPlant)).getFirst();
+        mockMvc.perform(post(PLANS).header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON).content(body(foreignAsset, 30, null)))
+                .andExpect(status().isForbidden());
+    }
+
     private String body(Integer assetId, int frequencyDays, Integer technician) {
         return """
                 {"assetId":%d,"title":"Inspección de prueba","tasks":"Revisar","frequencyDays":%d,

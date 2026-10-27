@@ -7,6 +7,7 @@ import com.techmakers.fixcore.serviceplanning.domain.model.commands.*;
 import com.techmakers.fixcore.serviceplanning.domain.model.valueobjects.PlanDetails;
 import com.techmakers.fixcore.serviceplanning.domain.repositories.MaintenancePlanRepository;
 import com.techmakers.fixcore.serviceplanning.domain.services.MaintenancePlanCommandService;
+import com.techmakers.fixcore.shared.application.security.PlantAccessGuard;
 import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -21,17 +22,20 @@ public class MaintenancePlanCommandServiceImpl implements MaintenancePlanCommand
     private final MaintenancePlanRepository planRepository;
     private final AssetCatalog assetCatalog;
     private final TechnicianDirectory technicianDirectory;
+    private final PlantAccessGuard plantAccessGuard;
 
     public MaintenancePlanCommandServiceImpl(MaintenancePlanRepository planRepository, AssetCatalog assetCatalog,
-                                             TechnicianDirectory technicianDirectory) {
+                                             TechnicianDirectory technicianDirectory, PlantAccessGuard plantAccessGuard) {
         this.planRepository = planRepository;
         this.assetCatalog = assetCatalog;
         this.technicianDirectory = technicianDirectory;
+        this.plantAccessGuard = plantAccessGuard;
     }
 
     @Override
     public MaintenancePlan handle(CreateMaintenancePlanCommand command) {
         var plantId = plantOf(command.details());
+        plantAccessGuard.ensureAccessTo(plantId);
         ensureTechnician(command.details());
         return planRepository.save(new MaintenancePlan(plantId, command.details()));
     }
@@ -49,9 +53,7 @@ public class MaintenancePlanCommandServiceImpl implements MaintenancePlanCommand
 
     @Override
     public void handle(DeleteMaintenancePlanCommand command) {
-        if (!planRepository.existsById(command.planId())) {
-            throw new ResourceNotFoundException("MaintenancePlan", command.planId());
-        }
+        findPlan(command.planId());
         planRepository.deleteById(command.planId());
     }
 
@@ -95,6 +97,8 @@ public class MaintenancePlanCommandServiceImpl implements MaintenancePlanCommand
     }
 
     private MaintenancePlan findPlan(Long planId) {
-        return planRepository.findById(planId).orElseThrow(() -> new ResourceNotFoundException("MaintenancePlan", planId));
+        var plan = planRepository.findById(planId).orElseThrow(() -> new ResourceNotFoundException("MaintenancePlan", planId));
+        plantAccessGuard.ensureAccessTo(plan.getPlantId());
+        return plan;
     }
 }

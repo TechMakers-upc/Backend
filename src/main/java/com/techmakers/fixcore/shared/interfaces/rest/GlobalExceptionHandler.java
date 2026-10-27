@@ -1,6 +1,7 @@
 package com.techmakers.fixcore.shared.interfaces.rest;
 
 import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
+import com.techmakers.fixcore.shared.domain.exceptions.PlantAccessDeniedException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceAlreadyExistsException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -59,6 +60,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleConflict(RuntimeException ex) {
         var error = new ApiError(409, ex.getMessage(), Instant.now());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(PlantAccessDeniedException.class)
+    public ResponseEntity<ApiError> handlePlantAccessDenied(PlantAccessDeniedException ex) {
+        var error = new ApiError(403, ex.getMessage(), Instant.now());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
