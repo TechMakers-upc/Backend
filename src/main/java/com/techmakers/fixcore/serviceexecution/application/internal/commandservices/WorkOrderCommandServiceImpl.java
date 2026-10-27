@@ -1,6 +1,7 @@
 package com.techmakers.fixcore.serviceexecution.application.internal.commandservices;
 
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.AssetCatalog;
+import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.PlanCatalog;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.UserDirectory;
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder;
 import com.techmakers.fixcore.serviceexecution.domain.model.commands.*;
@@ -25,13 +26,15 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     private final FailureRepository failureRepository;
     private final AssetCatalog assetCatalog;
     private final UserDirectory userDirectory;
+    private final PlanCatalog planCatalog;
 
     public WorkOrderCommandServiceImpl(WorkOrderRepository workOrderRepository, FailureRepository failureRepository,
-                                       AssetCatalog assetCatalog, UserDirectory userDirectory) {
+                                       AssetCatalog assetCatalog, UserDirectory userDirectory, PlanCatalog planCatalog) {
         this.workOrderRepository = workOrderRepository;
         this.failureRepository = failureRepository;
         this.assetCatalog = assetCatalog;
         this.userDirectory = userDirectory;
+        this.planCatalog = planCatalog;
     }
 
     @Override
@@ -45,6 +48,11 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
                 .orElseThrow(() -> new ResourceNotFoundException("Failure", command.failureId()));
         if (failure != null && !failure.getAssetId().equals(command.assetId())) {
             throw new BusinessRuleViolationException("The failure belongs to another asset");
+        }
+        if (command.planId() != null && !planCatalog.assetIdOfPlan(command.planId())
+                .orElseThrow(() -> new ResourceNotFoundException("MaintenancePlan", command.planId()))
+                .equals(command.assetId())) {
+            throw new BusinessRuleViolationException("The maintenance plan belongs to another asset");
         }
         var order = workOrderRepository.save(WorkOrder.open(nextCode(), command.type(), plantId, command.assetId(),
                 command.failureId(), command.planId(), command.details(), command.technicianId(), creatorId, Instant.now()));
