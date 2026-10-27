@@ -13,6 +13,7 @@ import com.techmakers.fixcore.serviceexecution.domain.model.commands.StartWorkOr
 import com.techmakers.fixcore.serviceexecution.domain.repositories.FailureRepository;
 import com.techmakers.fixcore.serviceexecution.domain.repositories.WorkOrderRepository;
 import com.techmakers.fixcore.serviceexecution.domain.services.WorkOrderExecutionService;
+import com.techmakers.fixcore.shared.application.security.PlantAccessGuard;
 import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -32,18 +33,21 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
     private final AssetStatusUpdater assetStatusUpdater;
     private final StockConsumer stockConsumer;
     private final PlanCompletionRecorder planCompletionRecorder;
+    private final PlantAccessGuard plantAccessGuard;
 
     public WorkOrderExecutionServiceImpl(WorkOrderRepository workOrderRepository, FailureRepository failureRepository,
                                          UserDirectory userDirectory, PartCatalog partCatalog,
                                          AssetStatusUpdater assetStatusUpdater, StockConsumer stockConsumer,
-                                         PlanCompletionRecorder planCompletionRecorder) {
-        this.planCompletionRecorder = planCompletionRecorder;
+                                         PlanCompletionRecorder planCompletionRecorder,
+                                         PlantAccessGuard plantAccessGuard) {
         this.workOrderRepository = workOrderRepository;
         this.failureRepository = failureRepository;
         this.userDirectory = userDirectory;
         this.partCatalog = partCatalog;
         this.assetStatusUpdater = assetStatusUpdater;
         this.stockConsumer = stockConsumer;
+        this.planCompletionRecorder = planCompletionRecorder;
+        this.plantAccessGuard = plantAccessGuard;
     }
 
     @Override
@@ -109,7 +113,9 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
     }
 
     private WorkOrder findOrder(Long workOrderId) {
-        return workOrderRepository.findById(workOrderId)
+        var order = workOrderRepository.findById(workOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkOrder", workOrderId));
+        plantAccessGuard.ensureAccessTo(order.getPlantId());
+        return order;
     }
 }

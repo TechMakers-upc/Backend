@@ -10,6 +10,7 @@ import com.techmakers.fixcore.serviceexecution.domain.model.valueobjects.WorkOrd
 import com.techmakers.fixcore.serviceexecution.domain.repositories.FailureRepository;
 import com.techmakers.fixcore.serviceexecution.domain.repositories.WorkOrderRepository;
 import com.techmakers.fixcore.serviceexecution.domain.services.WorkOrderCommandService;
+import com.techmakers.fixcore.shared.application.security.PlantAccessGuard;
 import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -27,20 +28,24 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     private final AssetCatalog assetCatalog;
     private final UserDirectory userDirectory;
     private final PlanCatalog planCatalog;
+    private final PlantAccessGuard plantAccessGuard;
 
     public WorkOrderCommandServiceImpl(WorkOrderRepository workOrderRepository, FailureRepository failureRepository,
-                                       AssetCatalog assetCatalog, UserDirectory userDirectory, PlanCatalog planCatalog) {
+                                       AssetCatalog assetCatalog, UserDirectory userDirectory, PlanCatalog planCatalog,
+                                       PlantAccessGuard plantAccessGuard) {
         this.workOrderRepository = workOrderRepository;
         this.failureRepository = failureRepository;
         this.assetCatalog = assetCatalog;
         this.userDirectory = userDirectory;
         this.planCatalog = planCatalog;
+        this.plantAccessGuard = plantAccessGuard;
     }
 
     @Override
     public WorkOrder handle(CreateWorkOrderCommand command) {
         var plantId = assetCatalog.plantIdOfAsset(command.assetId())
                 .orElseThrow(() -> new ResourceNotFoundException("Asset", command.assetId()));
+        plantAccessGuard.ensureAccessTo(plantId);
         var creatorId = userDirectory.userIdByEmail(command.createdBy())
                 .orElseThrow(() -> new ResourceNotFoundException("User", command.createdBy()));
         ensureTechnician(command.technicianId());
@@ -101,7 +106,9 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     }
 
     private WorkOrder findOrder(Long workOrderId) {
-        return workOrderRepository.findById(workOrderId)
+        var order = workOrderRepository.findById(workOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkOrder", workOrderId));
+        plantAccessGuard.ensureAccessTo(order.getPlantId());
+        return order;
     }
 }

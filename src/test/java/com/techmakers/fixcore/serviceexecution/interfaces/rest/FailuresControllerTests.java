@@ -96,6 +96,16 @@ class FailuresControllerTests {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void shouldRejectReportsOnAnotherPlant() throws Exception {
+        var assets = read("/api/v1/assets");
+        Integer ownPlant = JsonPath.<List<Integer>>read(assets, "$[?(@.code == 'CMP-01')].plantId").getFirst();
+        Integer foreignAsset = JsonPath.<List<Integer>>read(assets, "$[?(@.plantId != %d)].id".formatted(ownPlant)).getFirst();
+        mockMvc.perform(post(FAILURES).header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON).content(body(foreignAsset, "leak", false)))
+                .andExpect(status().isForbidden());
+    }
+
     private String body(Integer assetId, String kind, boolean lineStopped) {
         return "{\"assetId\":%d,\"kind\":\"%s\",\"description\":\"Prueba\",\"lineStopped\":%s}"
                 .formatted(assetId, kind, lineStopped);
