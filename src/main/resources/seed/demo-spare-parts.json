@@ -1,0 +1,142 @@
+[
+  {
+    "plantName": "Planta Ate",
+    "sku": "RD-6205",
+    "name": "Rodamiento 6205-2RS",
+    "category": "mechanical",
+    "unit": "unit",
+    "stock": 14,
+    "minStock": 6,
+    "location": "A-01-03"
+  },
+  {
+    "plantName": "Planta Ate",
+    "sku": "FLT-AC90",
+    "name": "Filtro de aceite de compresor",
+    "category": "consumable",
+    "unit": "unit",
+    "stock": 2,
+    "minStock": 3,
+    "location": "A-02-01"
+  },
+  {
+    "plantName": "Planta Ate",
+    "sku": "ACE-46",
+    "name": "Aceite hidráulico ISO 46",
+    "category": "hydraulic",
+    "unit": "liter",
+    "stock": 38,
+    "minStock": 20,
+    "location": "Cuarto de lubricantes"
+  },
+  {
+    "plantName": "Planta Ate",
+    "sku": "FJ-B42",
+    "name": "Faja en V B42",
+    "category": "mechanical",
+    "unit": "unit",
+    "stock": 0,
+    "minStock": 2,
+    "location": "A-03-02"
+  },
+  {
+    "plantName": "Planta Ate",
+    "sku": "SNS-M18",
+    "name": "Sensor inductivo M18",
+    "category": "electrical",
+    "unit": "unit",
+    "stock": 5,
+    "minStock": 2,
+    "location": "B-01-04"
+  },
+  {
+    "plantName": "Planta Ate",
+    "sku": "CNT-9A",
+    "name": "Contactor 9 A 220 V",
+    "category": "electrical",
+    "unit": "unit",
+    "stock": 7,
+    "minStock": 3,
+    "location": "B-01-01"
+  },
+  {
+    "plantName": "Planta Ate",
+    "sku": "SLL-HPX",
+    "name": "Kit de sellos prensa HPX",
+    "category": "hydraulic",
+    "unit": "kit",
+    "stock": 1,
+    "minStock": 1,
+    "location": "A-04-01"
+  },
+  {
+    "plantName": "Planta Ate",
+    "sku": "GRS-EP2",
+    "name": "Grasa EP2 cartucho 400 g",
+    "category": "consumable",
+    "unit": "unit",
+    "stock": 12,
+    "minStock": 6,
+    "location": "Cuarto de lubricantes"
+  },
+  {
+    "plantName": "Planta Ate",
+    "sku": "VLV-52",
+    "name": "Válvula neumática 5/2",
+    "category": "pneumatic",
+    "unit": "unit",
+    "stock": 3,
+    "minStock": 1,
+    "location": "B-02-03"
+  },
+  {
+    "plantName": "Planta Callao",
+    "sku": "RD-6205",
+    "name": "Rodamiento 6205-2RS",
+    "category": "mechanical",
+    "unit": "unit",
+    "stock": 9,
+    "minStock": 6,
+    "location": "R-01"
+  },
+  {
+    "plantName": "Planta Callao",
+    "sku": "FLT-AC90",
+    "name": "Filtro de aceite de compresor",
+    "category": "consumable",
+    "unit": "unit",
+    "stock": 6,
+    "minStock": 3,
+    "location": "R-02"
+  },
+  {
+    "plantName": "Planta Callao",
+    "sku": "MRD-SVE",
+    "name": "Mordaza de sellado SVE",
+    "category": "mechanical",
+    "unit": "unit",
+    "stock": 1,
+    "minStock": 2,
+    "location": "R-05"
+  },
+  {
+    "plantName": "Planta Arequipa",
+    "sku": "SLL-TH1",
+    "name": "Kit de sellos prensa TH",
+    "category": "hydraulic",
+    "unit": "kit",
+    "stock": 2,
+    "minStock": 1,
+    "location": "Almacén 1"
+  },
+  {
+    "plantName": "Planta Arequipa",
+    "sku": "ACE-46",
+    "name": "Aceite hidráulico ISO 46",
+    "category": "hydraulic",
+    "unit": "liter",
+    "stock": 40,
+    "minStock": 20,
+    "location": "Almacén 1"
+  }
+]
