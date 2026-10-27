@@ -11,6 +11,7 @@ public record SaveSparePartResource(
         @NotBlank String category,
         @NotBlank String unit,
         @Min(0) int minStock,
-        @Size(max = 60) String location
+        @Size(max = 60) String location,
+        @Min(0) Integer initialStock
 ) {
 }
