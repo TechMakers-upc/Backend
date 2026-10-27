@@ -80,7 +80,7 @@ class AssetsControllerTests {
     @Test
     void shouldChangeStatusAndManageManuals() throws Exception {
         var created = mockMvc.perform(post(ASSETS).header("Authorization", plantManager)
-                        .contentType(MediaType.APPLICATION_JSON).content(body(callao, "TST-02", "press")))
+                        .contentType(MediaType.APPLICATION_JSON).content(body(ate, "TST-02", "press")))
                 .andReturn().getResponse().getContentAsString();
         Integer id = JsonPath.read(created, "$.id");
 
@@ -113,6 +113,18 @@ class AssetsControllerTests {
                 .andExpect(status().isNotFound());
         mockMvc.perform(delete("/api/v1/plants/" + ate).header("Authorization", operationsManager))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldKeepPlantManagersInsideTheirPlant() throws Exception {
+        mockMvc.perform(post(ASSETS).header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON).content(body(callao, "TST-90", "pump")))
+                .andExpect(status().isForbidden());
+        var callaoAsset = mockMvc.perform(get(ASSETS).param("plantId", String.valueOf(callao)).header("Authorization", technician))
+                .andReturn().getResponse().getContentAsString();
+        Integer assetId = JsonPath.<List<Integer>>read(callaoAsset, "$[*].id").getFirst();
+        mockMvc.perform(delete(ASSETS + "/" + assetId).header("Authorization", plantManager))
+                .andExpect(status().isForbidden());
     }
 
     private String body(int plantId, String code, String category) {
