@@ -1,0 +1,9 @@
+CREATE TABLE plants (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    city VARCHAR(80) NOT NULL,
+    address VARCHAR(200) NOT NULL DEFAULT '',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    CONSTRAINT uk_plants_name UNIQUE (name)
+);
