@@ -1,0 +1,110 @@
+[
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "CMP-01",
+    "kind": "noise",
+    "description": "Golpeteo fuerte al cargar, sale olor a quemado.",
+    "lineStopped": true,
+    "priority": "critical",
+    "status": "resolved",
+    "reporterEmail": "jose.ramirez@fixcore.demo",
+    "reportedAt": "2026-09-01T04:00:00.000Z",
+    "resolvedAt": "2026-09-01T12:00:00.000Z"
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "ENV-04",
+    "kind": "electrical",
+    "description": "Se dispara la térmica del motor principal.",
+    "lineStopped": true,
+    "priority": "critical",
+    "status": "resolved",
+    "reporterEmail": "miguel.torres@fixcore.demo",
+    "reportedAt": "2026-09-16T04:00:00.000Z",
+    "resolvedAt": "2026-09-16T07:30:00.000Z"
+  },
+  {
+    "plantName": "Planta Arequipa",
+    "assetCode": "PRH-21",
+    "kind": "leak",
+    "description": "Fuga de aceite por el cilindro principal.",
+    "lineStopped": true,
+    "priority": "high",
+    "status": "resolved",
+    "reporterEmail": "luis.huaman@fixcore.demo",
+    "reportedAt": "2026-09-21T04:00:00.000Z",
+    "resolvedAt": "2026-09-21T09:00:00.000Z"
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "BMB-05",
+    "kind": "leak",
+    "description": "Gotea por el sello mecánico, charco bajo la bomba.",
+    "lineStopped": true,
+    "priority": "high",
+    "status": "resolved",
+    "reporterEmail": "miguel.torres@fixcore.demo",
+    "reportedAt": "2026-09-24T04:00:00.000Z",
+    "resolvedAt": "2026-09-24T10:00:00.000Z"
+  },
+  {
+    "plantName": "Planta Callao",
+    "assetCode": "FJT-13",
+    "kind": "jam",
+    "description": "La faja se traba con cajas húmedas.",
+    "lineStopped": true,
+    "priority": "medium",
+    "status": "resolved",
+    "reporterEmail": "rosa.quispe@fixcore.demo",
+    "reportedAt": "2026-09-28T04:00:00.000Z",
+    "resolvedAt": "2026-09-28T06:00:00.000Z"
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "PRH-02",
+    "kind": "leak",
+    "description": "Pierde aceite por la tapa del cilindro, baja la presión al cerrar.",
+    "lineStopped": false,
+    "priority": "high",
+    "status": "in-progress",
+    "reporterEmail": "jose.ramirez@fixcore.demo",
+    "reportedAt": "2026-10-05T02:00:00.000Z",
+    "resolvedAt": null
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "FJT-03",
+    "kind": "noise",
+    "description": "Chirrido en el rodillo motriz cuando arranca.",
+    "lineStopped": false,
+    "priority": null,
+    "status": "open",
+    "reporterEmail": "miguel.torres@fixcore.demo",
+    "reportedAt": "2026-10-05T08:00:00.000Z",
+    "resolvedAt": null
+  },
+  {
+    "plantName": "Planta Ate",
+    "assetCode": "CMP-01",
+    "kind": "wont-start",
+    "description": "No arranca, el tablero marca falla de temperatura.",
+    "lineStopped": true,
+    "priority": "critical",
+    "status": "in-progress",
+    "reporterEmail": "jose.ramirez@fixcore.demo",
+    "reportedAt": "2026-10-05T23:00:00.000Z",
+    "resolvedAt": null
+  },
+  {
+    "plantName": "Planta Callao",
+    "assetCode": "ENV-12",
+    "kind": "jam",
+    "description": "Se atasca el film en el formador, la línea A está parada.",
+    "lineStopped": true,
+    "priority": "critical",
+    "status": "open",
+    "reporterEmail": "rosa.quispe@fixcore.demo",
+    "reportedAt": "2026-10-06T02:00:00.000Z",
+    "resolvedAt": null
+  }
+]
