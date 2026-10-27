@@ -1,5 +1,6 @@
 package com.techmakers.fixcore.serviceexecution.application.internal.commandservices;
 
+import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.AssetStatusUpdater;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.PartCatalog;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.UserDirectory;
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder;
@@ -25,20 +26,25 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
     private final FailureRepository failureRepository;
     private final UserDirectory userDirectory;
     private final PartCatalog partCatalog;
+    private final AssetStatusUpdater assetStatusUpdater;
 
     public WorkOrderExecutionServiceImpl(WorkOrderRepository workOrderRepository, FailureRepository failureRepository,
-                                         UserDirectory userDirectory, PartCatalog partCatalog) {
+                                         UserDirectory userDirectory, PartCatalog partCatalog,
+                                         AssetStatusUpdater assetStatusUpdater) {
         this.workOrderRepository = workOrderRepository;
         this.failureRepository = failureRepository;
         this.userDirectory = userDirectory;
         this.partCatalog = partCatalog;
+        this.assetStatusUpdater = assetStatusUpdater;
     }
 
     @Override
     public WorkOrder handle(StartWorkOrderCommand command) {
         var order = findOrder(command.workOrderId());
         order.start(Instant.now());
-        return workOrderRepository.save(order);
+        var saved = workOrderRepository.save(order);
+        assetStatusUpdater.markInMaintenanceIfOperational(saved.getAssetId());
+        return saved;
     }
 
     @Override
