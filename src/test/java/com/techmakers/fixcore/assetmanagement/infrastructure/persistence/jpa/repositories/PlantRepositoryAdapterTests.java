@@ -22,24 +22,25 @@ class PlantRepositoryAdapterTests {
 
     @Test
     void shouldSaveUpdateAndListPlantsByName() {
-        var callao = plantRepository.save(new Plant("Planta Callao", "Callao", "Av. Argentina 3250"));
-        plantRepository.save(new Plant("Planta Ate", "Lima", "Av. Nicolás Ayllón 2480"));
+        var callao = plantRepository.save(new Plant("Repo Planta Sur", "Callao", "Av. Argentina 3250"));
+        plantRepository.save(new Plant("Repo Planta Este", "Lima", "Av. Nicolás Ayllón 2480"));
 
-        callao.updateDetails("Planta Callao Norte", "Callao", "Av. Argentina 3300");
+        callao.updateDetails("Repo Planta Sur Norte", "Callao", "Av. Argentina 3300");
         plantRepository.save(callao);
 
         assertThat(plantRepository.findAll()).extracting(Plant::getName)
-                .containsExactly("Planta Ate", "Planta Callao Norte");
+                .filteredOn(name -> name.startsWith("Repo"))
+                .containsExactly("Repo Planta Este", "Repo Planta Sur Norte");
         assertThat(plantRepository.findById(callao.getId())).get()
                 .extracting(Plant::getAddress).isEqualTo("Av. Argentina 3300");
     }
 
     @Test
     void shouldDetectDuplicateNamesIgnoringCase() {
-        var arequipa = plantRepository.save(new Plant("Planta Arequipa", "Arequipa", ""));
+        var arequipa = plantRepository.save(new Plant("Repo Planta Sierra", "Arequipa", ""));
 
-        assertThat(plantRepository.existsByName("planta arequipa")).isTrue();
-        assertThat(plantRepository.existsByNameAndIdNot("Planta Arequipa", arequipa.getId())).isFalse();
-        assertThat(plantRepository.existsByNameAndIdNot("Planta Arequipa", arequipa.getId() + 1)).isTrue();
+        assertThat(plantRepository.existsByName("repo planta sierra")).isTrue();
+        assertThat(plantRepository.existsByNameAndIdNot("Repo Planta Sierra", arequipa.getId())).isFalse();
+        assertThat(plantRepository.existsByNameAndIdNot("Repo Planta Sierra", arequipa.getId() + 1)).isTrue();
     }
 }
