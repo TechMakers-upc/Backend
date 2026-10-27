@@ -1,248 +1,169 @@
 # FixCore Backend
 
-FixCore is a maintenance management platform designed to help industrial organizations manage assets, work orders, spare parts, and maintenance operations.
+FixCore helps industrial plants keep their machines running. Plant managers register machines and spare parts, plan preventive maintenance, and assign work orders; technicians report failures, log their repairs, and record the parts they use; the operations manager follows every plant from one dashboard.
 
-This repository contains the backend application developed with Java, Spring Boot, PostgreSQL, Domain-Driven Design (DDD), and Clean Architecture.
+This repository holds the REST API behind the [FixCore Frontend](https://github.com/TechMakers-upc/Frontend). It is a Spring Boot modular monolith organized with Domain-Driven Design and Clean Architecture.
 
 ## 1. Technologies
 
-- Java 21
-- Spring Boot 4.0.3
-- Maven
-- PostgreSQL 17
-- Spring Data JPA
-- Hibernate
-- Flyway
-- Jakarta Bean Validation
-- JUnit 5
-- Spring MVC Test
+- Java 21 and Spring Boot 4.0.3 (Spring MVC, Spring Data JPA, Spring Security, Actuator)
+- PostgreSQL 18 with Flyway migrations
+- JWT authentication (jjwt) with BCrypt password hashing
+- springdoc-openapi for Swagger documentation
+- JUnit 5, Spring MVC Test, H2 and ArchUnit for tests
+- Maven Wrapper and Docker
 
-## 2. Project Architecture
+## 2. Bounded Contexts
 
-The backend follows a modular monolith architecture based on Domain-Driven Design (DDD) and Clean Architecture.
-
-The application is organized into five bounded contexts:
-
-| Bounded Context | Package | Responsibility |
+| Context | Package | What it owns |
 |---|---|---|
-| Identity & Access Management | `iam` | User identity and access management |
-| Resource & Asset Management | `assetmanagement` | Management of industrial assets |
-| Service Design & Planning | `serviceplanning` | Maintenance planning |
-| Service Execution & Monitoring | `serviceexecution` | Execution and monitoring of maintenance work |
-| Inventory & Spare Parts Management | `inventory` | Spare parts and inventory management |
+| Identity & Access Management | `iam` | Users, roles, sign-up, sign-in and JWT tokens |
+| Resource & Asset Management | `assetmanagement` | Plants, machines, machine status and manuals |
+| Service Design & Planning | `serviceplanning` | Preventive maintenance plans and their schedule |
+| Service Execution & Monitoring | `serviceexecution` | Failure reports and work orders |
+| Inventory & Spare Parts | `inventory` | Spare parts, stock levels and stock movements |
+| Analytics | `analytics` | Read-only KPIs for dashboards and reports |
+| Notifications | `notifications` | Role-based alerts derived from the current state |
 
-Each bounded context is divided into four layers:
+`shared` holds technical pieces used by every context: the base auditable entity, the naming strategy, the exception handler, CORS and the plant access contract.
 
-- **Domain:** Entities, value objects, business rules, and repository interfaces.
-- **Application:** Use cases and application services.
-- **Infrastructure:** Persistence implementations and external integrations.
-- **Interfaces:** REST controllers and request/response DTOs.
+Contexts never touch each other's persistence. When one needs another, it calls that context's facade in `interfaces/acl` through a port of its own. For example, closing a work order resolves its failure, moves the maintenance plan forward and puts the machine back to `operational`, all through facades. The details are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
-The `shared` package contains reusable technical components.
+## 3. Roles and Plant Scope
 
-Additional architectural decisions are documented in `ARCHITECTURE.md`.
+| Role | Value | Scope |
+|---|---|---|
+| Plant manager | `plant-manager` | Manages machines, parts, plans and work orders of their own plant |
+| Technician | `technician` | Reports failures and executes the work orders of their own plant |
+| Operations manager | `operations-manager` | Reads and manages every plant |
 
-## 3. Sprint 3 Scope
-
-The initial backend implementation focuses on three functional areas:
-
-- Resource & Asset Management: plants and machines.
-- Service Execution & Monitoring: work orders.
-- Inventory & Spare Parts Management: spare parts.
-
-Identity & Access Management and Service Design & Planning are included in the architectural structure but are not part of the initial functional implementation.
+Writing to another plant returns `403 Forbidden`.
 
 ## 4. Requirements
 
-Before running the backend, install:
-
-- Java Development Kit (JDK) 21
-- PostgreSQL 17
+- JDK 21
+- PostgreSQL 18 (or Docker)
 - Git
 
-Maven can be executed using the included Maven Wrapper.
+## 5. Running Locally
 
-## 5. Database Configuration
+### 5.1 Database
 
-The backend uses PostgreSQL for data persistence.
+Create a `fixcore` database owned by a `fixcore_user` login. Flyway creates every table on the first start.
 
-Create a database with the following configuration:
-
-| Property | Value |
-|---|---|
-| Host | `localhost` |
-| Port | `5432` |
-| Database | `fixcore` |
-| Username | `fixcore_user` |
-| Password | Environment variable `DB_PASSWORD` |
-
-The database must be owned by `fixcore_user`.
-
-Database connection settings are defined in:
-
-`src/main/resources/application-dev.properties`
-
-The database password is not stored in the repository.
-
-### Configure the database password
-
-Open PowerShell in the project directory and execute:
-
-```powershell
-$secure = Read-Host "PostgreSQL password" -AsSecureString
-$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
-
-try {
-    $env:DB_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
-}
-finally {
-    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
-}
+```sql
+CREATE ROLE fixcore_user WITH LOGIN PASSWORD 'choose-a-password';
+CREATE DATABASE fixcore OWNER fixcore_user;
 ```
 
-The environment variable is available only in the current PowerShell session.
+### 5.2 Start the API
 
-## 6. Running the Application
-
-Clone the repository:
+The `dev` profile is the default. It connects to `localhost:5432/fixcore` and loads demo data.
 
 ```powershell
-git clone https://github.com/TechMakers-upc/Backend.git
-cd Backend
-```
-
-After configuring PostgreSQL and the `DB_PASSWORD` environment variable, start the application:
-
-```powershell
+$env:DB_PASSWORD = "choose-a-password"
 .\mvnw.cmd spring-boot:run
 ```
 
-The application runs on:
+The API listens on `http://localhost:8080` and Swagger UI is at `http://localhost:8080/swagger-ui.html`.
 
-`http://localhost:8080`
+### 5.3 Demo accounts
 
-The `dev` profile is used by default.
+The `dev` profile seeds three plants (Ate, Callao and Arequipa), their machines, plans, parts, failures and work orders. Every demo account uses the password `FixCore2026`.
 
-Functional REST endpoints will be added as the bounded contexts are implemented.
+| Email | Role | Plant |
+|---|---|---|
+| `victor.salazar@fixcore.demo` | Operations manager | All |
+| `carla.garcia@fixcore.demo` | Plant manager | Planta Ate |
+| `jose.ramirez@fixcore.demo` | Technician | Planta Ate |
+| `jairo.mendoza@fixcore.demo` | Plant manager | Planta Callao |
+| `rosa.quispe@fixcore.demo` | Technician | Planta Callao |
+| `ana.paredes@fixcore.demo` | Plant manager | Planta Arequipa |
+| `luis.huaman@fixcore.demo` | Technician | Planta Arequipa |
 
-## 7. Database Migrations
+Seeders only add what is missing, so restarting the app does not duplicate data.
 
-Flyway is responsible for managing database schema changes.
+## 6. Running with Docker
 
-Migration files are located in:
+Copy `.env.example` to `.env`, set a database password and a JWT secret of at least 32 characters, then run:
 
-`src/main/resources/db/migration`
+```bash
+docker compose up --build
+```
 
-The initial migration is:
+This starts PostgreSQL and the API with the `prod` profile on port `8080`. The `prod` profile does not load demo data and keeps Swagger off unless `SWAGGER_ENABLED=true`.
 
-`V1__initialize_database.sql`
+## 7. Configuration
 
-Flyway automatically executes pending migrations when the application starts with the development database configuration.
+| Variable | Profile | Purpose |
+|---|---|---|
+| `SPRING_PROFILES_ACTIVE` | all | `dev` by default, `prod` for deployments |
+| `DB_URL` | prod | JDBC URL, for example `jdbc:postgresql://host:5432/fixcore` |
+| `DB_USERNAME` | dev, prod | Database user (`fixcore_user` in dev) |
+| `DB_PASSWORD` | dev, prod | Database password |
+| `JWT_SECRET` | prod | Signing key for tokens, required, at least 32 characters |
+| `JWT_EXPIRATION_DAYS` | all | Token lifetime, 7 days by default |
+| `CORS_ALLOWED_ORIGINS` | all | Comma-separated Frontend origins |
+| `SWAGGER_ENABLED` | prod | `false` by default |
+| `PORT` | prod | HTTP port, 8080 by default |
 
-Migration history is stored in the `flyway_schema_history` table.
+`GET /actuator/health` is public so a hosting platform can check the service.
 
-Hibernate is configured with:
+## 8. API
 
-`spring.jpa.hibernate.ddl-auto=validate`
+Every endpoint lives under `/api/v1` and, except authentication and health, needs an `Authorization: Bearer <token>` header. Enum values travel in lowercase kebab case, such as `in-progress` or `plant-manager`.
 
-This configuration validates the database schema instead of automatically creating or modifying tables.
-
-Previously applied migrations must not be modified. New database changes should be introduced through additional versioned migration files.
-
-## 8. REST API Conventions
-
-The backend uses RESTful APIs with JSON request and response bodies.
-
-General conventions:
-
-- Use resource-oriented endpoints.
-- Use `GET` to retrieve resources.
-- Use `POST` to create resources.
-- Use `PUT` or `PATCH` to update resources.
-- Use `DELETE` to remove resources when applicable.
-- Use DTOs for API requests and responses.
-- Validate incoming data using Jakarta Bean Validation.
-- Keep business rules inside the domain and application layers.
-- Avoid exposing persistence entities directly through REST endpoints.
-
-Common HTTP status codes:
-
-| Status | Description |
+| Area | Endpoints |
 |---|---|
-| 200 OK | Successful request |
-| 201 Created | Resource successfully created |
-| 204 No Content | Successful request without a response body |
-| 400 Bad Request | Invalid request |
-| 404 Not Found | Resource not found |
-| 409 Conflict | Request conflicts with the current resource state |
-| 500 Internal Server Error | Unexpected server error |
+| Authentication | `POST /authentication/sign-up`, `POST /authentication/sign-in` |
+| Users | `GET /users`, `GET /users/me`, `GET /users/{id}`, `GET /roles` |
+| Plants | `GET POST /plants`, `GET PUT DELETE /plants/{id}` |
+| Machines | `GET POST /assets`, `GET PUT DELETE /assets/{id}`, `PATCH /assets/{id}/status`, `POST /assets/{id}/manuals`, `DELETE /assets/{id}/manuals/{index}` |
+| Maintenance plans | `GET POST /maintenance-plans`, `GET PUT DELETE /maintenance-plans/{id}`, `PATCH .../schedule`, `POST .../suspension`, `POST .../reactivation`, `POST .../completions` |
+| Spare parts | `GET POST /spare-parts`, `GET PUT DELETE /spare-parts/{id}`, `POST .../entries`, `POST .../adjustments`, `POST .../consumptions`, `GET /stock-movements` |
+| Failures | `GET POST /failures`, `GET /failures/{id}`, `PATCH .../priority`, `POST .../resolution` |
+| Work orders | `GET POST /work-orders`, `GET PUT DELETE /work-orders/{id}`, `PATCH .../assignment`, `POST .../start`, `POST .../work-logs`, `POST .../part-usages`, `POST .../completion` |
+| Analytics | `GET /analytics/summary`, `GET /analytics/downtime-ranking`, `GET /analytics/technicians/{id}/performance` (optional `plantId`, `from`, `to`) |
+| Alerts | `GET /alerts` |
 
-## 9. Exception Handling
+Swagger UI documents every request and response body.
 
-The application includes a shared REST exception handling mechanism.
+### Errors
 
-Its implementation is located in:
-
-`src/main/java/com/techmakers/fixcore/shared/interfaces/rest`
-
-The shared components are:
-
-- `ApiError.java`
-- `GlobalExceptionHandler.java`
-
-The current implementation handles request validation failures, constraint violations, and invalid JSON request bodies.
-
-Example validation error:
+Errors share one shape:
 
 ```json
 {
-  "status": 400,
-  "message": "Validation failed",
-  "timestamp": "2026-10-20T16:30:00Z"
+  "status": 409,
+  "message": "Only pending work orders can start",
+  "timestamp": "2026-10-27T16:30:00Z"
 }
 ```
 
-Additional business-specific errors will be implemented alongside their respective bounded contexts.
+| Status | When |
+|---|---|
+| 400 | Invalid body, parameter or value |
+| 401 | Missing or invalid token, wrong credentials |
+| 403 | Role not allowed, or data from another plant |
+| 404 | Resource not found |
+| 409 | Duplicate data or a business rule was broken |
 
-## 10. Testing
+## 9. Database Migrations
 
-The backend uses JUnit 5 and Spring MVC Test.
+Migrations live in `src/main/resources/db/migration` (`V1` to `V9` today) and run on startup. Hibernate only validates the schema (`ddl-auto=validate`). Never edit a migration that was already applied; add a new versioned file instead.
 
-Run the automated tests with:
+## 10. Tests
 
 ```powershell
-.\mvnw.cmd clean test
+.\mvnw.cmd test
 ```
 
-The current test suite includes:
+The suite runs on an in-memory H2 database in PostgreSQL mode and covers domain rules, repository adapters, REST controllers, security, the cross-context maintenance flow, plant scope, analytics and alerts. `ArchitectureTests` fails the build if a domain class depends on Spring, JPA or an outer layer.
 
-- Application context initialization.
-- Request body validation.
-- Invalid JSON request handling.
+## 11. Git Workflow
 
-The tests use the `test` profile, which currently excludes database auto-configuration.
+We follow Gitflow. Work starts from `develop` on a `feature/*` branch, is pushed and merged back through a pull request with a merge commit, and reaches `main` through a `release/*` branch. Commits use Conventional Commits (`feat`, `fix`, `test`, `docs`, `build`) and stay small.
 
-Database integration tests will require a separate test database configuration.
+## 12. Team
 
-## 11. Development Guidelines
-
-Developers should follow these conventions:
-
-- Keep implementation code inside its corresponding bounded context.
-- Separate domain logic from application and infrastructure concerns.
-- Avoid direct dependencies between the infrastructure implementations of different contexts.
-- Define explicit contracts for interactions between contexts.
-- Place REST controllers in the interfaces layer.
-- Place use cases in the application layer.
-- Keep persistence implementations in the infrastructure layer.
-- Manage database changes through Flyway migrations.
-- Do not commit passwords, credentials, or environment-specific secrets.
-- Verify changes using automated tests before creating pull requests.
-
-## 12. Project Team
-
-**TechMakers — Universidad Peruana de Ciencias Aplicadas (UPC)**
-
-FixCore is developed as part of the Open Source Applications course.
-
-Backend development follows a collaborative workflow using Git and GitHub, with feature branches integrated into the shared development branch.
+**TechMakers** — Universidad Peruana de Ciencias Aplicadas (UPC), Open Source Applications course.

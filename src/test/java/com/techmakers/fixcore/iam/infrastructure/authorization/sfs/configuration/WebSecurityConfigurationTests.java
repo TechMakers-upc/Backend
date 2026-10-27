@@ -51,6 +51,12 @@ class WebSecurityConfigurationTests {
     }
 
     @Test
+    void shouldExposeHealthWithoutToken() throws Exception {
+        mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
+        mockMvc.perform(get("/actuator/env")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void shouldAllowApiDocumentationWithoutToken() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk());
