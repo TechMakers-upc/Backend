@@ -1,6 +1,7 @@
 package com.techmakers.fixcore.serviceexecution.application.internal.commandservices;
 
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.AssetCatalog;
+import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.AssetStatusUpdater;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.UserDirectory;
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.Failure;
 import com.techmakers.fixcore.serviceexecution.domain.model.commands.PrioritizeFailureCommand;
@@ -21,12 +22,14 @@ public class FailureCommandServiceImpl implements FailureCommandService {
     private final FailureRepository failureRepository;
     private final AssetCatalog assetCatalog;
     private final UserDirectory userDirectory;
+    private final AssetStatusUpdater assetStatusUpdater;
 
     public FailureCommandServiceImpl(FailureRepository failureRepository, AssetCatalog assetCatalog,
-                                     UserDirectory userDirectory) {
+                                     UserDirectory userDirectory, AssetStatusUpdater assetStatusUpdater) {
         this.failureRepository = failureRepository;
         this.assetCatalog = assetCatalog;
         this.userDirectory = userDirectory;
+        this.assetStatusUpdater = assetStatusUpdater;
     }
 
     @Override
@@ -35,8 +38,12 @@ public class FailureCommandServiceImpl implements FailureCommandService {
                 .orElseThrow(() -> new ResourceNotFoundException("Asset", command.assetId()));
         var reporterId = userDirectory.userIdByEmail(command.reportedBy())
                 .orElseThrow(() -> new ResourceNotFoundException("User", command.reportedBy()));
-        return failureRepository.save(Failure.report(plantId, command.assetId(), command.kind(), command.description(),
-                command.lineStopped(), reporterId, Instant.now()));
+        var failure = failureRepository.save(Failure.report(plantId, command.assetId(), command.kind(),
+                command.description(), command.lineStopped(), reporterId, Instant.now()));
+        if (failure.isLineStopped()) {
+            assetStatusUpdater.markDown(failure.getAssetId());
+        }
+        return failure;
     }
 
     @Override
