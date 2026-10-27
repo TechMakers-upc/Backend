@@ -2,6 +2,7 @@ package com.techmakers.fixcore.serviceexecution.application.internal.commandserv
 
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.AssetStatusUpdater;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.PartCatalog;
+import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.PlanCompletionRecorder;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.StockConsumer;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.UserDirectory;
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Service
 @Transactional
@@ -29,10 +31,13 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
     private final PartCatalog partCatalog;
     private final AssetStatusUpdater assetStatusUpdater;
     private final StockConsumer stockConsumer;
+    private final PlanCompletionRecorder planCompletionRecorder;
 
     public WorkOrderExecutionServiceImpl(WorkOrderRepository workOrderRepository, FailureRepository failureRepository,
                                          UserDirectory userDirectory, PartCatalog partCatalog,
-                                         AssetStatusUpdater assetStatusUpdater, StockConsumer stockConsumer) {
+                                         AssetStatusUpdater assetStatusUpdater, StockConsumer stockConsumer,
+                                         PlanCompletionRecorder planCompletionRecorder) {
+        this.planCompletionRecorder = planCompletionRecorder;
         this.workOrderRepository = workOrderRepository;
         this.failureRepository = failureRepository;
         this.userDirectory = userDirectory;
@@ -88,7 +93,19 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
                         failureRepository.save(failure);
                     });
         }
+        if (saved.getPlanId() != null) {
+            planCompletionRecorder.registerCompletion(saved.getPlanId(), LocalDate.now());
+        }
+        if (isAssetFree(saved)) {
+            assetStatusUpdater.markOperational(saved.getAssetId());
+        }
         return saved;
+    }
+
+    private boolean isAssetFree(WorkOrder order) {
+        var stoppedLineOpen = failureRepository.findAllByAssetId(order.getAssetId()).stream()
+                .anyMatch(failure -> failure.isLineStopped() && !failure.isResolved());
+        return !stoppedLineOpen && !workOrderRepository.existsOtherInProgressForAsset(order.getAssetId(), order.getId());
     }
 
     private WorkOrder findOrder(Long workOrderId) {
