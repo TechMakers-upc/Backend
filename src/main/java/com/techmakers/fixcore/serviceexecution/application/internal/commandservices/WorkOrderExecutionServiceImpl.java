@@ -2,6 +2,7 @@ package com.techmakers.fixcore.serviceexecution.application.internal.commandserv
 
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.AssetStatusUpdater;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.PartCatalog;
+import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.StockConsumer;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.UserDirectory;
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder;
 import com.techmakers.fixcore.serviceexecution.domain.model.commands.CompleteWorkOrderCommand;
@@ -27,15 +28,17 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
     private final UserDirectory userDirectory;
     private final PartCatalog partCatalog;
     private final AssetStatusUpdater assetStatusUpdater;
+    private final StockConsumer stockConsumer;
 
     public WorkOrderExecutionServiceImpl(WorkOrderRepository workOrderRepository, FailureRepository failureRepository,
                                          UserDirectory userDirectory, PartCatalog partCatalog,
-                                         AssetStatusUpdater assetStatusUpdater) {
+                                         AssetStatusUpdater assetStatusUpdater, StockConsumer stockConsumer) {
         this.workOrderRepository = workOrderRepository;
         this.failureRepository = failureRepository;
         this.userDirectory = userDirectory;
         this.partCatalog = partCatalog;
         this.assetStatusUpdater = assetStatusUpdater;
+        this.stockConsumer = stockConsumer;
     }
 
     @Override
@@ -65,7 +68,10 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
             throw new BusinessRuleViolationException("The spare part belongs to another plant");
         }
         order.registerPartUsage(command.partId(), command.quantity(), Instant.now());
-        return workOrderRepository.save(order);
+        var saved = workOrderRepository.save(order);
+        stockConsumer.consume(command.partId(), command.quantity(), saved.getId(), saved.getCode().value(),
+                command.performedBy());
+        return saved;
     }
 
     @Override

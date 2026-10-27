@@ -49,8 +49,10 @@ public class WorkOrderExecutionController {
     @PostMapping("/part-usages")
     @Operation(summary = "Record a spare part used in an order in progress")
     public ResponseEntity<WorkOrderResource> registerPartUsage(@PathVariable Long workOrderId,
-                                                               @Valid @RequestBody RegisterPartUsageResource resource) {
-        return ok(executionService.handle(new RegisterPartUsageCommand(workOrderId, resource.partId(), resource.quantity())));
+                                                               @Valid @RequestBody RegisterPartUsageResource resource,
+                                                               Principal principal) {
+        return ok(executionService.handle(new RegisterPartUsageCommand(workOrderId, resource.partId(),
+                resource.quantity(), principal.getName())));
     }
 
     @PostMapping("/completion")
