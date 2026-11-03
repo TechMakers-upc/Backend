@@ -1,6 +1,7 @@
 package com.techmakers.fixcore.iam.interfaces.rest;
 
 import com.techmakers.fixcore.iam.application.outboundservices.acl.PlantDirectory;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "fixcore.seed.demo-plants.enabled=true")
+@SpringBootTest(properties = {
+        "fixcore.seed.demo-plants.enabled=true",
+        "fixcore.seed.demo-users.enabled=true"
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AuthenticationControllerTests {
@@ -43,7 +47,7 @@ class AuthenticationControllerTests {
 
     @Test
     void shouldSignUpAndSignIn() throws Exception {
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("rosa@fixcore.com", "technician", callao)))
+        mockMvc.perform(post(SIGN_UP).header("Authorization", operationsManager()).contentType(MediaType.APPLICATION_JSON).content(signUpBody("rosa@fixcore.com", "technician", callao)))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/api/v1/users/")))
                 .andExpect(jsonPath("$.role").value("technician"))
@@ -60,37 +64,77 @@ class AuthenticationControllerTests {
     @Test
     void shouldRejectDuplicateEmail() throws Exception {
         var body = signUpBody("duplicate@fixcore.com", "plant-manager", ate);
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated());
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isConflict());
+        mockMvc.perform(post(SIGN_UP).header("Authorization", operationsManager()).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated());
+        mockMvc.perform(post(SIGN_UP).header("Authorization", operationsManager()).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isConflict());
     }
 
     @Test
     void shouldRejectTechnicianWithoutPlant() throws Exception {
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("noplant@fixcore.com", "technician", "null")))
+        mockMvc.perform(post(SIGN_UP).header("Authorization", operationsManager()).contentType(MediaType.APPLICATION_JSON).content(signUpBody("noplant@fixcore.com", "technician", "null")))
                 .andExpect(status().isConflict());
     }
 
     @Test
     void shouldRejectUnknownPlant() throws Exception {
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("ghost@fixcore.com", "technician", "999999")))
+        mockMvc.perform(post(SIGN_UP).header("Authorization", operationsManager()).contentType(MediaType.APPLICATION_JSON).content(signUpBody("ghost@fixcore.com", "technician", "999999")))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void shouldRejectUnknownRole() throws Exception {
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("admin@fixcore.com", "admin", ate)))
+        mockMvc.perform(post(SIGN_UP).header("Authorization", operationsManager()).contentType(MediaType.APPLICATION_JSON).content(signUpBody("admin@fixcore.com", "admin", ate)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldRejectWrongPassword() throws Exception {
-        mockMvc.perform(post(SIGN_UP).contentType(MediaType.APPLICATION_JSON).content(signUpBody("luis@fixcore.com", "technician", arequipa)))
+        mockMvc.perform(post(SIGN_UP).header("Authorization", operationsManager()).contentType(MediaType.APPLICATION_JSON).content(signUpBody("luis@fixcore.com", "technician", arequipa)))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post(SIGN_IN).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"luis@fixcore.com\",\"password\":\"wrong-password\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Email or password is incorrect"));
+    }
+
+    @Test
+    void shouldRejectAnonymousRegistration() throws Exception {
+        mockMvc.perform(post(SIGN_UP)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signUpBody("anonymous@fixcore.com", "operations-manager", "null")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void plantManagerCannotCreateOperationsManager() throws Exception {
+        mockMvc.perform(post(SIGN_UP)
+                        .header("Authorization", tokenFor("carla.garcia@fixcore.demo"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signUpBody("elevated@fixcore.com", "operations-manager", "null")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void plantManagerCannotCreateTechnicianInAnotherPlant() throws Exception {
+        mockMvc.perform(post(SIGN_UP)
+                        .header("Authorization", tokenFor("carla.garcia@fixcore.demo"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signUpBody("foreign@fixcore.com", "technician", callao)))
+                .andExpect(status().isForbidden());
+    }
+
+    private String operationsManager() throws Exception {
+        return tokenFor("victor.salazar@fixcore.demo");
+    }
+
+    private String tokenFor(String email) throws Exception {
+        var response = mockMvc.perform(post(SIGN_IN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        return "Bearer " + JsonPath.read(response, "$.token");
     }
 
     private String plantIdOf(String name) {
