@@ -8,6 +8,7 @@ import com.techmakers.fixcore.serviceexecution.domain.model.commands.PrioritizeF
 import com.techmakers.fixcore.serviceexecution.domain.model.commands.ReportFailureCommand;
 import com.techmakers.fixcore.serviceexecution.domain.model.commands.ResolveFailureCommand;
 import com.techmakers.fixcore.serviceexecution.domain.repositories.FailureRepository;
+import com.techmakers.fixcore.serviceexecution.domain.repositories.WorkOrderRepository;
 import com.techmakers.fixcore.serviceexecution.domain.services.FailureCommandService;
 import com.techmakers.fixcore.shared.application.security.PlantAccessGuard;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
@@ -21,6 +22,7 @@ import java.time.Instant;
 public class FailureCommandServiceImpl implements FailureCommandService {
 
     private final FailureRepository failureRepository;
+    private final WorkOrderRepository workOrderRepository;
     private final AssetCatalog assetCatalog;
     private final UserDirectory userDirectory;
     private final AssetStatusUpdater assetStatusUpdater;
@@ -28,8 +30,9 @@ public class FailureCommandServiceImpl implements FailureCommandService {
 
     public FailureCommandServiceImpl(FailureRepository failureRepository, AssetCatalog assetCatalog,
                                      UserDirectory userDirectory, AssetStatusUpdater assetStatusUpdater,
-                                     PlantAccessGuard plantAccessGuard) {
+                                     PlantAccessGuard plantAccessGuard, WorkOrderRepository workOrderRepository) {
         this.failureRepository = failureRepository;
+        this.workOrderRepository = workOrderRepository;
         this.assetCatalog = assetCatalog;
         this.userDirectory = userDirectory;
         this.assetStatusUpdater = assetStatusUpdater;
@@ -62,7 +65,19 @@ public class FailureCommandServiceImpl implements FailureCommandService {
     public Failure handle(ResolveFailureCommand command) {
         var failure = findFailure(command.failureId());
         failure.resolve(Instant.now());
-        return failureRepository.save(failure);
+        var saved = failureRepository.save(failure);
+
+        if (saved.isLineStopped()) {
+            var anotherStoppingFailure = failureRepository.findAllByAssetId(saved.getAssetId()).stream()
+                    .anyMatch(other -> other.isLineStopped() && !other.isResolved());
+
+            if (!anotherStoppingFailure
+                    && !workOrderRepository.existsInProgressForAsset(saved.getAssetId())) {
+                assetStatusUpdater.markOperational(saved.getAssetId());
+            }
+        }
+
+        return saved;
     }
 
     private Failure findFailure(Long failureId) {

@@ -2,6 +2,7 @@ package com.techmakers.fixcore.serviceplanning.domain.model.aggregates;
 
 import com.techmakers.fixcore.serviceplanning.domain.model.valueobjects.PlanDetails;
 import com.techmakers.fixcore.serviceplanning.domain.model.valueobjects.PlanStanding;
+import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -64,6 +65,7 @@ public class MaintenancePlan {
 
     public void registerCompletion(LocalDate completedOn) {
         if (completedOn == null) throw new IllegalArgumentException("Completion date is required");
+        if (!active) throw new BusinessRuleViolationException("Suspended maintenance plans cannot be completed");
         lastCompletedAt = completedOn;
         details = withNextDueDate(completedOn.plusDays(details.frequencyDays()));
     }

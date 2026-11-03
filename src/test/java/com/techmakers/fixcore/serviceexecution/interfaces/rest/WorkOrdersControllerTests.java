@@ -74,7 +74,7 @@ class WorkOrdersControllerTests {
         mockMvc.perform(get("/api/v1/failures/" + failureId).header("Authorization", plantManager))
                 .andExpect(jsonPath("$.status").value("in-progress"));
 
-        mockMvc.perform(post(order + "/start").header("Authorization", technician)).andExpect(status().isConflict());
+        mockMvc.perform(post(order + "/start").header("Authorization", technician)).andExpect(status().isForbidden());
         mockMvc.perform(patch(order + "/assignment").header("Authorization", plantManager)
                 .contentType(MediaType.APPLICATION_JSON).content("{\"technicianId\":%d}".formatted(technicianId)));
         mockMvc.perform(post(order + "/start").header("Authorization", technician))
@@ -104,11 +104,101 @@ class WorkOrdersControllerTests {
         Integer completed = idOf(ORDERS, "$[?(@.code == 'OT-2026-0001')].id");
         mockMvc.perform(delete(ORDERS + "/" + completed).header("Authorization", plantManager))
                 .andExpect(status().isConflict());
-        Integer callaoPart = idOf("/api/v1/spare-parts", "$[?(@.sku == 'MRD-SVE')].id");
+        var foreignParts = mockMvc.perform(get("/api/v1/spare-parts")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
+        Integer callaoPart = JsonPath.<List<Integer>>read(foreignParts, "$[?(@.sku == 'MRD-SVE')].id").getFirst();
         Integer inProgress = idOf(ORDERS, "$[?(@.code == 'OT-2026-0010')].id");
-        mockMvc.perform(post(ORDERS + "/" + inProgress + "/part-usages").header("Authorization", technician)
+        var miguel = tokenFor("miguel.torres@fixcore.demo");
+        mockMvc.perform(post(ORDERS + "/" + inProgress + "/part-usages").header("Authorization", miguel)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"partId\":%d,\"quantity\":1}".formatted(callaoPart)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void technicianCanOnlyReadAssignedWorkOrders() throws Exception {
+        Integer assigned = idOf(ORDERS, "$[?(@.code == 'OT-2026-0001')].id");
+        Integer other = idOf(ORDERS, "$[?(@.code == 'OT-2026-0010')].id");
+        Integer unassigned = idOf(ORDERS, "$[?(@.code == 'OT-2026-0013')].id");
+
+        mockMvc.perform(get(ORDERS + "/" + assigned)
+                        .header("Authorization", technician))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get(ORDERS + "/" + other)
+                        .header("Authorization", technician))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get(ORDERS + "/" + unassigned)
+                        .header("Authorization", technician))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get(ORDERS).header("Authorization", technician))
+                .andExpect(jsonPath("$[?(@.code == 'OT-2026-0010')]").isEmpty())
+                .andExpect(jsonPath("$[?(@.code == 'OT-2026-0013')]").isEmpty());
+    }
+
+    @Test
+    void technicianCannotExecuteAnotherTechniciansWorkOrder() throws Exception {
+        Integer other = idOf(ORDERS, "$[?(@.code == 'OT-2026-0010')].id");
+        String url = ORDERS + "/" + other;
+
+        mockMvc.perform(post(url + "/start")
+                        .header("Authorization", technician))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post(url + "/work-logs")
+                        .header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"note\":\"Intento no autorizado\"}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post(url + "/part-usages")
+                        .header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"partId\":1,\"quantity\":1}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post(url + "/completion")
+                        .header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"solution\":\"Cierre no autorizado\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectTechniciansFromOtherPlants() throws Exception {
+        var foreignUsers = mockMvc.perform(get("/api/v1/users?email=rosa.quispe@fixcore.demo")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
+        Integer rosaId = JsonPath.<List<Integer>>read(foreignUsers, "$[*].id").getFirst();
+
+        mockMvc.perform(post(ORDERS)
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(pumpId, null, rosaId)))
                 .andExpect(status().isConflict());
+
+        Integer pending = idOf(ORDERS, "$[?(@.code == 'OT-2026-0011')].id");
+
+        mockMvc.perform(patch(ORDERS + "/" + pending + "/assignment")
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"technicianId\":%d}".formatted(rosaId)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void plantManagerCannotReadAnotherPlantsOrders() throws Exception {
+        var callaoManager = tokenFor("jairo.mendoza@fixcore.demo");
+        Integer ateOrder = idOf(ORDERS, "$[?(@.code == 'OT-2026-0011')].id");
+
+        mockMvc.perform(get(ORDERS + "/" + ateOrder)
+                        .header("Authorization", callaoManager))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get(ORDERS).header("Authorization", callaoManager))
+                .andExpect(jsonPath("$[?(@.code == 'OT-2026-0011')]").isEmpty());
     }
 
     private Integer plantOfPump() throws Exception {

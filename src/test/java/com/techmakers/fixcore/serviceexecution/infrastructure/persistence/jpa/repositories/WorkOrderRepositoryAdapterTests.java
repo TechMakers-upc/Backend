@@ -47,6 +47,30 @@ class WorkOrderRepositoryAdapterTests {
                 .extracting(WorkOrderCode::sequence).isEqualTo(12);
     }
 
+    @Test
+    void shouldFindHighestSequenceBeyondFourDigits() {
+        workOrderRepository.save(open(WorkOrderCode.of(1998, 9999)));
+        workOrderRepository.save(open(WorkOrderCode.of(1998, 10000)));
+
+        var last = workOrderRepository.findLastCodeStartingWith("OT-1998-");
+
+        assertThat(last).isPresent();
+        assertThat(last.orElseThrow().sequence()).isEqualTo(10000);
+    }
+
+    @Test
+    void shouldReadWorkOrderUsingExclusiveLock() {
+        var saved = workOrderRepository.save(
+                open(WorkOrderCode.of(1997, 1))
+        );
+
+        var locked = workOrderRepository.findByIdForUpdate(saved.getId());
+
+        assertThat(locked).isPresent();
+        assertThat(locked.orElseThrow().getCode())
+                .isEqualTo(WorkOrderCode.of(1997, 1));
+    }
+
     private static WorkOrder open(WorkOrderCode code) {
         return WorkOrder.open(code, WorkOrderType.CORRECTIVE, 500L, 5001L, null, null,
                 new WorkOrderDetails("Reparar compresor", "", Priority.HIGH, LocalDate.of(2026, 9, 2)), 3L, 1L, OPENED);
