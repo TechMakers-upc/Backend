@@ -98,12 +98,70 @@ class FailuresControllerTests {
 
     @Test
     void shouldRejectReportsOnAnotherPlant() throws Exception {
-        var assets = read("/api/v1/assets");
+        var assets = mockMvc.perform(get("/api/v1/assets")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
         Integer ownPlant = JsonPath.<List<Integer>>read(assets, "$[?(@.code == 'CMP-01')].plantId").getFirst();
         Integer foreignAsset = JsonPath.<List<Integer>>read(assets, "$[?(@.plantId != %d)].id".formatted(ownPlant)).getFirst();
         mockMvc.perform(post(FAILURES).header("Authorization", technician)
                         .contentType(MediaType.APPLICATION_JSON).content(body(foreignAsset, "leak", false)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void machineRecoversOnlyAfterAllStoppingFailuresAreResolved() throws Exception {
+        Integer plantId = JsonPath.read(
+                read("/api/v1/assets/" + compressorId),
+                "$.plantId");
+
+        var createdAsset = mockMvc.perform(post("/api/v1/assets")
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"plantId":%d,"code":"INT-RSLV","name":"Máquina de prueba",
+                                 "category":"mixer","criticality":"medium"}"""
+                                .formatted(plantId)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Integer assetId = JsonPath.read(createdAsset, "$.id");
+
+        var first = mockMvc.perform(post(FAILURES)
+                        .header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(assetId, "leak", true)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        var second = mockMvc.perform(post(FAILURES)
+                        .header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(assetId, "jam", true)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Integer firstId = JsonPath.read(first, "$.id");
+        Integer secondId = JsonPath.read(second, "$.id");
+
+        mockMvc.perform(get("/api/v1/assets/" + assetId)
+                        .header("Authorization", plantManager))
+                .andExpect(jsonPath("$.status").value("down"));
+
+        mockMvc.perform(post(FAILURES + "/" + firstId + "/resolution")
+                        .header("Authorization", plantManager))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/assets/" + assetId)
+                        .header("Authorization", plantManager))
+                .andExpect(jsonPath("$.status").value("down"));
+
+        mockMvc.perform(post(FAILURES + "/" + secondId + "/resolution")
+                        .header("Authorization", plantManager))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/assets/" + assetId)
+                        .header("Authorization", plantManager))
+                .andExpect(jsonPath("$.status").value("operational"));
     }
 
     private String body(Integer assetId, String kind, boolean lineStopped) {

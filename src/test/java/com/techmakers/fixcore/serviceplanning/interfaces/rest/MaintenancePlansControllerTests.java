@@ -97,12 +97,107 @@ class MaintenancePlansControllerTests {
 
     @Test
     void shouldRejectPlansForAnotherPlant() throws Exception {
-        var assets = read("/api/v1/assets");
+        var assets = mockMvc.perform(get("/api/v1/assets")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
         Integer ownPlant = JsonPath.<List<Integer>>read(assets, "$[?(@.code == 'CMP-01')].plantId").getFirst();
         Integer foreignAsset = JsonPath.<List<Integer>>read(assets, "$[?(@.plantId != %d)].id".formatted(ownPlant)).getFirst();
         mockMvc.perform(post(PLANS).header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON).content(body(foreignAsset, 30, null)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectForeignTechnicianWhenCreatingPlan() throws Exception {
+        var foreignUsers = mockMvc.perform(get("/api/v1/users")
+                        .param("email", "rosa.quispe@fixcore.demo")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
+
+        Integer rosaId = JsonPath.<List<Integer>>read(foreignUsers, "$[*].id").getFirst();
+
+        mockMvc.perform(post(PLANS)
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(compressorId, 30, rosaId)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldRejectForeignTechnicianWhenUpdatingPlan() throws Exception {
+        var foreignUsers = mockMvc.perform(get("/api/v1/users")
+                        .param("email", "rosa.quispe@fixcore.demo")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
+
+        Integer rosaId = JsonPath.<List<Integer>>read(foreignUsers, "$[*].id").getFirst();
+
+        var created = mockMvc.perform(post(PLANS)
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(compressorId, 30, technicianId)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Integer planId = JsonPath.read(created, "$.id");
+
+        mockMvc.perform(put(PLANS + "/" + planId)
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(compressorId, 30, rosaId)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void technicianCannotCompleteAnotherTechniciansPlan() throws Exception {
+        Integer miguelId = JsonPath.<List<Integer>>read(
+                read("/api/v1/users?email=miguel.torres@fixcore.demo"),
+                "$[*].id").getFirst();
+
+        var created = mockMvc.perform(post(PLANS)
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(compressorId, 30, miguelId)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Integer planId = JsonPath.read(created, "$.id");
+
+        var completion = "{\"completedOn\":\"%s\"}".formatted(LocalDate.now());
+
+        mockMvc.perform(post(PLANS + "/" + planId + "/completions")
+                        .header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(completion))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post(PLANS + "/" + planId + "/completions")
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(completion))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void suspendedPlanCannotRegisterCompletion() throws Exception {
+        var created = mockMvc.perform(post(PLANS)
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(compressorId, 30, technicianId)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Integer planId = JsonPath.read(created, "$.id");
+
+        mockMvc.perform(post(PLANS + "/" + planId + "/suspension")
+                        .header("Authorization", plantManager))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post(PLANS + "/" + planId + "/completions")
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"completedOn\":\"%s\"}".formatted(LocalDate.now())))
+                .andExpect(status().isConflict());
     }
 
     private String body(Integer assetId, int frequencyDays, Integer technician) {

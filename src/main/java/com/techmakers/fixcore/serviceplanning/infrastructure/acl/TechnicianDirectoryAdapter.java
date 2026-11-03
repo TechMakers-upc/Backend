@@ -21,6 +21,11 @@ public class TechnicianDirectoryAdapter implements TechnicianDirectory {
     }
 
     @Override
+    public Optional<Long> technicianPlantId(Long userId) {
+        return iamContextFacade.fetchTechnicianPlantId(userId);
+    }
+
+    @Override
     public Optional<Long> technicianIdByEmail(String email) {
         return iamContextFacade.fetchUserIdByEmail(email).filter(iamContextFacade::isTechnician);
     }

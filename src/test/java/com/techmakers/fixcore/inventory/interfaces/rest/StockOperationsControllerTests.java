@@ -63,14 +63,14 @@ class StockOperationsControllerTests {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":10,\"reason\":\"OC-900\"}"))
                 .andExpect(jsonPath("$.stock").value(15));
         mockMvc.perform(post(part + "/consumptions").header("Authorization", technician)
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":4,\"workOrderId\":77,\"reason\":\"OT\"}"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":4,\"reason\":\"OT\"}"))
                 .andExpect(jsonPath("$.stock").value(11));
         mockMvc.perform(post(part + "/adjustments").header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"countedStock\":9,\"reason\":\"Conteo físico\"}"))
                 .andExpect(jsonPath("$.stock").value(9));
 
         mockMvc.perform(get("/api/v1/stock-movements").param("plantId", ate.toString()).header("Authorization", plantManager))
-                .andExpect(jsonPath("$[*].workOrderId", hasItem(77)));
+                .andExpect(jsonPath("$[*].reason", hasItem("OT")));
     }
 
     @Test
@@ -92,10 +92,29 @@ class StockOperationsControllerTests {
 
     @Test
     void shouldRejectStockOperationsOnAnotherPlant() throws Exception {
-        Integer callaoPart = JsonPath.<List<Integer>>read(read("/api/v1/spare-parts"), "$[?(@.sku == 'MRD-SVE')].id").getFirst();
+        var foreignParts = mockMvc.perform(get("/api/v1/spare-parts")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
+        Integer callaoPart = JsonPath.<List<Integer>>read(foreignParts, "$[?(@.sku == 'MRD-SVE')].id").getFirst();
         mockMvc.perform(post("/api/v1/spare-parts/" + callaoPart + "/entries").header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":10,\"reason\":\"OC-901\"}"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectConsumptionLinkedToUnknownWorkOrder() throws Exception {
+        Integer partId = createPart("TST-REF", 4);
+
+        mockMvc.perform(post("/api/v1/spare-parts/" + partId + "/consumptions")
+                        .header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"quantity\":1,\"workOrderId\":999999,\"reason\":\"Prueba\"}"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/spare-parts/" + partId)
+                        .header("Authorization", plantManager))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stock").value(4));
     }
 
     private Integer createPart(String sku, int initialStock) throws Exception {

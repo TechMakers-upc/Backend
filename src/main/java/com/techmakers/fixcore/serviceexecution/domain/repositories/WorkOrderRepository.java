@@ -12,6 +12,8 @@ public interface WorkOrderRepository {
 
     Optional<WorkOrder> findById(Long id);
 
+    Optional<WorkOrder> findByIdForUpdate(Long id);
+
     List<WorkOrder> findAll();
 
     List<WorkOrder> findAllByPlantId(Long plantId);
@@ -21,6 +23,8 @@ public interface WorkOrderRepository {
     boolean existsByCode(WorkOrderCode code);
 
     boolean existsOtherInProgressForAsset(Long assetId, Long excludedWorkOrderId);
+
+    boolean existsInProgressForAsset(Long assetId);
 
     void deleteById(Long id);
 }

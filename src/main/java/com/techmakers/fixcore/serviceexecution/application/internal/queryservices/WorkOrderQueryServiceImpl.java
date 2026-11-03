@@ -4,6 +4,7 @@ import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder
 import com.techmakers.fixcore.serviceexecution.domain.model.queries.GetWorkOrderByIdQuery;
 import com.techmakers.fixcore.serviceexecution.domain.model.queries.GetWorkOrdersQuery;
 import com.techmakers.fixcore.serviceexecution.domain.repositories.WorkOrderRepository;
+import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.WorkOrderAccessPolicy;
 import com.techmakers.fixcore.serviceexecution.domain.services.WorkOrderQueryService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +23,12 @@ public class WorkOrderQueryServiceImpl implements WorkOrderQueryService {
             .thenComparing(order -> order.getDetails().dueDate());
 
     private final WorkOrderRepository workOrderRepository;
+    private final WorkOrderAccessPolicy accessPolicy;
 
-    public WorkOrderQueryServiceImpl(WorkOrderRepository workOrderRepository) {
+    public WorkOrderQueryServiceImpl(WorkOrderRepository workOrderRepository,
+                                     WorkOrderAccessPolicy accessPolicy) {
         this.workOrderRepository = workOrderRepository;
+        this.accessPolicy = accessPolicy;
     }
 
     @Override
@@ -32,6 +36,7 @@ public class WorkOrderQueryServiceImpl implements WorkOrderQueryService {
         var orders = query.plantId() == null ? workOrderRepository.findAll()
                 : workOrderRepository.findAllByPlantId(query.plantId());
         return orders.stream()
+                .filter(accessPolicy::canRead)
                 .filter(order -> query.assetId() == null || query.assetId().equals(order.getAssetId()))
                 .filter(order -> query.technicianId() == null || query.technicianId().equals(order.getTechnicianId()))
                 .filter(order -> query.status() == null || query.status() == order.getStatus())
@@ -41,6 +46,10 @@ public class WorkOrderQueryServiceImpl implements WorkOrderQueryService {
 
     @Override
     public Optional<WorkOrder> handle(GetWorkOrderByIdQuery query) {
-        return workOrderRepository.findById(query.workOrderId());
+        return workOrderRepository.findById(query.workOrderId())
+                .map(order -> {
+                    accessPolicy.ensureCanRead(order);
+                    return order;
+                });
     }
 }

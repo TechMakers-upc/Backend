@@ -1,6 +1,7 @@
 package com.techmakers.fixcore.serviceexecution.application.internal.commandservices;
 
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.AssetCatalog;
+import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.WorkOrderCodeLock;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.PlanCatalog;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.UserDirectory;
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder;
@@ -29,16 +30,18 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     private final UserDirectory userDirectory;
     private final PlanCatalog planCatalog;
     private final PlantAccessGuard plantAccessGuard;
+    private final WorkOrderCodeLock workOrderCodeLock;
 
     public WorkOrderCommandServiceImpl(WorkOrderRepository workOrderRepository, FailureRepository failureRepository,
                                        AssetCatalog assetCatalog, UserDirectory userDirectory, PlanCatalog planCatalog,
-                                       PlantAccessGuard plantAccessGuard) {
+                                       PlantAccessGuard plantAccessGuard, WorkOrderCodeLock workOrderCodeLock) {
         this.workOrderRepository = workOrderRepository;
         this.failureRepository = failureRepository;
         this.assetCatalog = assetCatalog;
         this.userDirectory = userDirectory;
         this.planCatalog = planCatalog;
         this.plantAccessGuard = plantAccessGuard;
+        this.workOrderCodeLock = workOrderCodeLock;
     }
 
     @Override
@@ -48,7 +51,7 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
         plantAccessGuard.ensureAccessTo(plantId);
         var creatorId = userDirectory.userIdByEmail(command.createdBy())
                 .orElseThrow(() -> new ResourceNotFoundException("User", command.createdBy()));
-        ensureTechnician(command.technicianId());
+        ensureTechnician(command.technicianId(), plantId);
         var failure = command.failureId() == null ? null : failureRepository.findById(command.failureId())
                 .orElseThrow(() -> new ResourceNotFoundException("Failure", command.failureId()));
         if (failure != null && !failure.getAssetId().equals(command.assetId())) {
@@ -78,7 +81,7 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     @Override
     public WorkOrder handle(AssignWorkOrderCommand command) {
         var order = findOrder(command.workOrderId());
-        ensureTechnician(command.technicianId());
+        ensureTechnician(command.technicianId(), order.getPlantId());
         order.assign(command.technicianId());
         return workOrderRepository.save(order);
     }
@@ -93,20 +96,34 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     }
 
     private WorkOrderCode nextCode() {
+        workOrderCodeLock.acquire();
         var year = Year.now().getValue();
         var last = workOrderRepository.findLastCodeStartingWith(WorkOrderCode.prefixFor(year))
                 .map(WorkOrderCode::sequence).orElse(0);
         return WorkOrderCode.of(year, last + 1);
     }
 
-    private void ensureTechnician(Long technicianId) {
-        if (technicianId != null && !userDirectory.isTechnician(technicianId)) {
-            throw new BusinessRuleViolationException("User %d is not a technician".formatted(technicianId));
+    private void ensureTechnician(Long technicianId, Long plantId) {
+        if (technicianId == null) {
+            return;
+        }
+
+        if (!userDirectory.isTechnician(technicianId)) {
+            throw new BusinessRuleViolationException(
+                    "User %d is not a technician".formatted(technicianId));
+        }
+
+        if (userDirectory.technicianPlantId(technicianId)
+                .filter(plantId::equals)
+                .isEmpty()) {
+            throw new BusinessRuleViolationException(
+                    "Technician %d does not belong to the work order plant"
+                            .formatted(technicianId));
         }
     }
 
     private WorkOrder findOrder(Long workOrderId) {
-        var order = workOrderRepository.findById(workOrderId)
+        var order = workOrderRepository.findByIdForUpdate(workOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkOrder", workOrderId));
         plantAccessGuard.ensureAccessTo(order.getPlantId());
         return order;

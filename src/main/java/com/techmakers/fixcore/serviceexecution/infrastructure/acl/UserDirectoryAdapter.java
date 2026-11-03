@@ -24,4 +24,9 @@ public class UserDirectoryAdapter implements UserDirectory {
     public boolean isTechnician(Long userId) {
         return iamContextFacade.isTechnician(userId);
     }
+
+    @Override
+    public Optional<Long> technicianPlantId(Long userId) {
+        return iamContextFacade.fetchTechnicianPlantId(userId);
+    }
 }

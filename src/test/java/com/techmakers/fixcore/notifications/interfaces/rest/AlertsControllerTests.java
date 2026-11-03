@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,6 +55,75 @@ class AlertsControllerTests {
     @Test
     void shouldRequireAuthentication() throws Exception {
         mockMvc.perform(get(ALERTS)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldPersistReadStatusAndUpdateUnreadCount() throws Exception {
+        var email = "jose.ramirez@fixcore.demo";
+        var token = tokenFor(email);
+
+        List<String> ids = JsonPath.read(
+                alertsFor(email),
+                "$[?(@.kind == 'work-order-assigned')].id"
+        );
+
+        assertThat(ids).isNotEmpty();
+        var alertId = ids.get(0);
+
+        var beforeResponse = mockMvc.perform(
+                        get(ALERTS + "/unread-count")
+                                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        int before = ((Number) JsonPath.read(
+                beforeResponse, "$.unread")).intValue();
+
+        mockMvc.perform(
+                        patch(ALERTS + "/{alertId}/read", alertId)
+                                .header("Authorization", token))
+                .andExpect(status().isNoContent());
+
+        var updated = alertsFor(email);
+
+        List<Boolean> flags = JsonPath.read(
+                updated,
+                "$[?(@.id == '" + alertId + "')].read"
+        );
+
+        assertThat(flags).containsExactly(true);
+
+        var afterResponse = mockMvc.perform(
+                        get(ALERTS + "/unread-count")
+                                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        int after = ((Number) JsonPath.read(
+                afterResponse, "$.unread")).intValue();
+
+        assertThat(after).isEqualTo(before - 1);
+
+        mockMvc.perform(
+                        patch(ALERTS + "/{alertId}/read", alertId)
+                                .header("Authorization", token))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldNotAllowUserToMarkAnotherUsersAlert() throws Exception {
+        List<String> ids = JsonPath.read(
+                alertsFor("jose.ramirez@fixcore.demo"),
+                "$[?(@.kind == 'work-order-assigned')].id"
+        );
+
+        assertThat(ids).isNotEmpty();
+
+        mockMvc.perform(
+                        patch(ALERTS + "/{alertId}/read", ids.get(0))
+                                .header("Authorization",
+                                        tokenFor("carla.garcia@fixcore.demo")))
+                .andExpect(status().isNotFound());
     }
 
     private String alertsFor(String email) throws Exception {

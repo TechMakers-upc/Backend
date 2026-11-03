@@ -1,6 +1,7 @@
 package com.techmakers.fixcore.iam.application.internal.commandservices;
 
 import com.techmakers.fixcore.iam.application.outboundservices.acl.PlantDirectory;
+import com.techmakers.fixcore.iam.application.outboundservices.acl.UserProvisioningPolicy;
 import com.techmakers.fixcore.iam.application.outboundservices.hashing.HashingService;
 import com.techmakers.fixcore.iam.application.outboundservices.tokens.TokenService;
 import com.techmakers.fixcore.iam.domain.exceptions.InvalidCredentialsException;
@@ -22,13 +23,15 @@ public class UserCommandServiceImpl implements UserCommandService {
     private final HashingService hashingService;
     private final TokenService tokenService;
     private final PlantDirectory plantDirectory;
+    private final UserProvisioningPolicy provisioningPolicy;
 
     public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService,
-                                  PlantDirectory plantDirectory) {
+                                  PlantDirectory plantDirectory, UserProvisioningPolicy provisioningPolicy) {
         this.userRepository = userRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
         this.plantDirectory = plantDirectory;
+        this.provisioningPolicy = provisioningPolicy;
     }
 
     @Override
@@ -40,6 +43,7 @@ public class UserCommandServiceImpl implements UserCommandService {
         if (command.plantId() != null && !plantDirectory.exists(command.plantId())) {
             throw new ResourceNotFoundException("Plant", command.plantId());
         }
+        provisioningPolicy.ensureCanCreate(command.role(), command.plantId());
         var user = new User(command.email(), hashingService.encode(command.password()), command.fullName(),
                 command.jobTitle(), command.plantId(), command.role());
         return userRepository.save(user);

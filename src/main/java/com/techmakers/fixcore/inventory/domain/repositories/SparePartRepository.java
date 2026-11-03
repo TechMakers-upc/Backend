@@ -11,6 +11,8 @@ public interface SparePartRepository {
 
     Optional<SparePart> findById(Long id);
 
+    Optional<SparePart> findByIdForUpdate(Long id);
+
     List<SparePart> findAll();
 
     List<SparePart> findAllByPlantId(Long plantId);

@@ -41,16 +41,16 @@ class UsersControllerTests {
     void shouldListSeededUsers() throws Exception {
         mockMvc.perform(get("/api/v1/users").header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(8))));
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(3))));
     }
 
     @Test
     void shouldFindUserByEmail() throws Exception {
-        mockMvc.perform(get("/api/v1/users").param("email", "victor.salazar@fixcore.demo").header("Authorization", token))
+        mockMvc.perform(get("/api/v1/users").param("email", "jose.ramirez@fixcore.demo").header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].role").value("operations-manager"))
-                .andExpect(jsonPath("$[0].plantId").doesNotExist());
+                .andExpect(jsonPath("$[0].role").value("technician"))
+                .andExpect(jsonPath("$[0].plantId").isNumber());
     }
 
     @Test

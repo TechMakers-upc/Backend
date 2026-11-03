@@ -10,7 +10,11 @@ public final class AlertResourceAssembler {
     }
 
     public static AlertResource toResource(Alert alert) {
+        return toResource(alert, false);
+    }
+
+    public static AlertResource toResource(Alert alert, boolean read) {
         return new AlertResource(alert.id(), EnumValueAssembler.toValue(alert.kind()),
-                EnumValueAssembler.toValue(alert.severity()), alert.params(), alert.link(), alert.at());
+                EnumValueAssembler.toValue(alert.severity()), alert.params(), alert.link(), alert.at(), read);
     }
 }
