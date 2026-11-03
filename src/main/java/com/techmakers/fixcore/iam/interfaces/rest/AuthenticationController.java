@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,6 +31,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/sign-up")
+    @PreAuthorize("hasAnyRole('PLANT_MANAGER', 'OPERATIONS_MANAGER')")
     @Operation(summary = "Register a new user account")
     public ResponseEntity<UserResource> signUp(@Valid @RequestBody SignUpResource resource) {
         var user = userCommandService.handle(AuthenticationCommandAssembler.toCommand(resource));
