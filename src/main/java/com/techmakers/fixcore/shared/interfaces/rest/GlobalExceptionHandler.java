@@ -3,6 +3,7 @@ package com.techmakers.fixcore.shared.interfaces.rest;
 import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 import com.techmakers.fixcore.shared.domain.exceptions.PlantAccessDeniedException;
 import com.techmakers.fixcore.shared.domain.exceptions.WorkOrderAccessDeniedException;
+import com.techmakers.fixcore.shared.domain.exceptions.MaintenancePlanAccessDeniedException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceAlreadyExistsException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -71,6 +72,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(WorkOrderAccessDeniedException.class)
     public ResponseEntity<ApiError> handleWorkOrderAccessDenied(WorkOrderAccessDeniedException ex) {
+        var error = new ApiError(403, ex.getMessage(), Instant.now());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(MaintenancePlanAccessDeniedException.class)
+    public ResponseEntity<ApiError> handleMaintenancePlanAccessDenied(MaintenancePlanAccessDeniedException ex) {
         var error = new ApiError(403, ex.getMessage(), Instant.now());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
