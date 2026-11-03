@@ -40,7 +40,13 @@ public class SparePart {
     }
 
     public void receive(int quantity) {
-        if (quantity < 1) throw new IllegalArgumentException("Entries must add at least one unit");
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Entries must add at least one unit");
+        }
+        if (stock > Integer.MAX_VALUE - quantity) {
+            throw new BusinessRuleViolationException(
+                    "Stock quantity exceeds the supported maximum");
+        }
         stock += quantity;
     }
 
