@@ -28,6 +28,12 @@ public class SparePartRepositoryAdapter implements SparePartRepository {
     }
 
     @Override
+    public Optional<SparePart> findByIdForUpdate(Long id) {
+        return sparePartJpaRepository.findByIdForUpdate(id)
+                .map(SparePartPersistenceMapper::toDomain);
+    }
+
+    @Override
     public List<SparePart> findAll() {
         return sparePartJpaRepository.findAllByOrderByNameAsc().stream().map(SparePartPersistenceMapper::toDomain).toList();
     }

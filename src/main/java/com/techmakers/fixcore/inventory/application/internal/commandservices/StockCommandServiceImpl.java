@@ -70,7 +70,7 @@ public class StockCommandServiceImpl implements StockCommandService {
     }
 
     private SparePart findPart(Long partId) {
-        var part = partRepository.findById(partId).orElseThrow(() -> new ResourceNotFoundException("SparePart", partId));
+        var part = partRepository.findByIdForUpdate(partId).orElseThrow(() -> new ResourceNotFoundException("SparePart", partId));
         plantAccessGuard.ensureAccessTo(part.getPlantId());
         return part;
     }
