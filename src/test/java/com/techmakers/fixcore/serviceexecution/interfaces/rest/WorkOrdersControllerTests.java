@@ -112,7 +112,7 @@ class WorkOrdersControllerTests {
         var miguel = tokenFor("miguel.torres@fixcore.demo");
         mockMvc.perform(post(ORDERS + "/" + inProgress + "/part-usages").header("Authorization", miguel)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"partId\":%d,\"quantity\":1}".formatted(callaoPart)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isForbidden());
     }
 
     @Test
