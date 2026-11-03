@@ -8,6 +8,7 @@ import com.techmakers.fixcore.serviceexecution.infrastructure.persistence.jpa.en
 import com.techmakers.fixcore.serviceexecution.infrastructure.persistence.jpa.mappers.WorkOrderPersistenceMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,8 +44,10 @@ public class WorkOrderRepositoryAdapter implements WorkOrderRepository {
 
     @Override
     public Optional<WorkOrderCode> findLastCodeStartingWith(String prefix) {
-        return workOrderJpaRepository.findTopByCodeStartingWithOrderByCodeDesc(prefix)
-                .map(entity -> new WorkOrderCode(entity.getCode()));
+        return workOrderJpaRepository.findAllByCodeStartingWith(prefix)
+                .stream()
+                .map(entity -> new WorkOrderCode(entity.getCode()))
+                .max(Comparator.comparingInt(WorkOrderCode::sequence));
     }
 
     @Override

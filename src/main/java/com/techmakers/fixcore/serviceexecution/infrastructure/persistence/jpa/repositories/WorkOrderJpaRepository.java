@@ -5,7 +5,6 @@ import com.techmakers.fixcore.serviceexecution.infrastructure.persistence.jpa.en
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface WorkOrderJpaRepository extends JpaRepository<WorkOrderEntity, Long> {
 
@@ -13,7 +12,7 @@ public interface WorkOrderJpaRepository extends JpaRepository<WorkOrderEntity, L
 
     List<WorkOrderEntity> findAllByPlantIdOrderByDueDateAsc(Long plantId);
 
-    Optional<WorkOrderEntity> findTopByCodeStartingWithOrderByCodeDesc(String prefix);
+    List<WorkOrderEntity> findAllByCodeStartingWith(String prefix);
 
     boolean existsByCode(String code);
 
