@@ -115,7 +115,7 @@ Every endpoint lives under `/api/v1` and, except authentication and health, need
 
 | Area | Endpoints |
 |---|---|
-| Authentication | `POST /authentication/sign-up`, `POST /authentication/sign-in` |
+| Authentication | `POST /authentication/sign-in` (public), `POST /authentication/sign-up` (managers only) |
 | Users | `GET /users`, `GET /users/me`, `GET /users/{id}`, `GET /roles` |
 | Plants | `GET POST /plants`, `GET PUT DELETE /plants/{id}` |
 | Machines | `GET POST /assets`, `GET PUT DELETE /assets/{id}`, `PATCH /assets/{id}/status`, `POST /assets/{id}/manuals`, `DELETE /assets/{id}/manuals/{index}` |
@@ -124,7 +124,7 @@ Every endpoint lives under `/api/v1` and, except authentication and health, need
 | Failures | `GET POST /failures`, `GET /failures/{id}`, `PATCH .../priority`, `POST .../resolution` |
 | Work orders | `GET POST /work-orders`, `GET PUT DELETE /work-orders/{id}`, `PATCH .../assignment`, `POST .../start`, `POST .../work-logs`, `POST .../part-usages`, `POST .../completion` |
 | Analytics | `GET /analytics/summary`, `GET /analytics/downtime-ranking`, `GET /analytics/technicians/{id}/performance` (optional `plantId`, `from`, `to`) |
-| Alerts | `GET /alerts` |
+| Alerts | `GET /alerts`, `GET /alerts/unread-count`, `PATCH /alerts/{alertId}/read` |
 
 Swagger UI documents every request and response body.
 
@@ -150,7 +150,32 @@ Errors share one shape:
 
 ## 9. Database Migrations
 
-Migrations live in `src/main/resources/db/migration` (`V1` to `V9` today) and run on startup. Hibernate only validates the schema (`ddl-auto=validate`). Never edit a migration that was already applied; add a new versioned file instead.
+Migrations live in `src/main/resources/db/migration` (`V1` to `V11` today) and run on startup. Hibernate only validates the schema (`ddl-auto=validate`). Never edit a migration that was already applied; add a new versioned file instead.
+
+### Account provisioning
+
+Public registration is disabled. Plant managers can register technicians
+in their own plant. Operations managers can provision accounts across plants.
+
+For a brand-new database, the first operations manager can be created
+through an explicitly enabled, one-time bootstrap:
+
+- `FIXCORE_BOOTSTRAP_ENABLED=true`
+- `FIXCORE_BOOTSTRAP_EMAIL` set to the administrator's email
+- `FIXCORE_BOOTSTRAP_PASSWORD` set to a strong password of at least 12 characters
+
+Configure these variables securely. Remove or disable the bootstrap
+configuration after the initial administrator has been created.
+Never commit real credentials to Git.
+
+### Data integrity
+
+Work order code allocation uses a persistent database row lock to
+serialize concurrent allocations across application instances.
+
+Work order modifications use pessimistic locking. Spare part creation
+and initial stock registration run in one transaction, so failures roll
+back both operations.
 
 ## 10. Tests
 
