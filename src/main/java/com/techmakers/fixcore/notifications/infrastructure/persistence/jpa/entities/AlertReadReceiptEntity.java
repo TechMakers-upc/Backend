@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 
 @Entity
-@Table(name = "alert_read_receipts")
+@Table(name = "alert_read_receipt")
 public class AlertReadReceiptEntity {
 
     @EmbeddedId
