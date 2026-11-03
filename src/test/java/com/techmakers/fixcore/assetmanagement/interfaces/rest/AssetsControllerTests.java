@@ -120,7 +120,7 @@ class AssetsControllerTests {
         mockMvc.perform(post(ASSETS).header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON).content(body(callao, "TST-90", "pump")))
                 .andExpect(status().isForbidden());
-        var callaoAsset = mockMvc.perform(get(ASSETS).param("plantId", String.valueOf(callao)).header("Authorization", technician))
+        var callaoAsset = mockMvc.perform(get(ASSETS).param("plantId", String.valueOf(callao)).header("Authorization", operationsManager))
                 .andReturn().getResponse().getContentAsString();
         Integer assetId = JsonPath.<List<Integer>>read(callaoAsset, "$[*].id").getFirst();
         mockMvc.perform(delete(ASSETS + "/" + assetId).header("Authorization", plantManager))

@@ -97,7 +97,9 @@ class MaintenancePlansControllerTests {
 
     @Test
     void shouldRejectPlansForAnotherPlant() throws Exception {
-        var assets = read("/api/v1/assets");
+        var assets = mockMvc.perform(get("/api/v1/assets")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
         Integer ownPlant = JsonPath.<List<Integer>>read(assets, "$[?(@.code == 'CMP-01')].plantId").getFirst();
         Integer foreignAsset = JsonPath.<List<Integer>>read(assets, "$[?(@.plantId != %d)].id".formatted(ownPlant)).getFirst();
         mockMvc.perform(post(PLANS).header("Authorization", plantManager)
