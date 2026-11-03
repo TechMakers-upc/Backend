@@ -33,6 +33,12 @@ public class WorkOrderRepositoryAdapter implements WorkOrderRepository {
     }
 
     @Override
+    public Optional<WorkOrder> findByIdForUpdate(Long id) {
+        return workOrderJpaRepository.findByIdForUpdate(id)
+                .map(WorkOrderPersistenceMapper::toDomain);
+    }
+
+    @Override
     public List<WorkOrder> findAll() {
         return toDomain(workOrderJpaRepository.findAllByOrderByDueDateAsc());
     }

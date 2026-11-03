@@ -117,7 +117,7 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
     }
 
     private WorkOrder findOrder(Long workOrderId) {
-        var order = workOrderRepository.findById(workOrderId)
+        var order = workOrderRepository.findByIdForUpdate(workOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkOrder", workOrderId));
         plantAccessGuard.ensureAccessTo(order.getPlantId());
         accessPolicy.ensureCanExecute(order);

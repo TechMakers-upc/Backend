@@ -123,7 +123,7 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     }
 
     private WorkOrder findOrder(Long workOrderId) {
-        var order = workOrderRepository.findById(workOrderId)
+        var order = workOrderRepository.findByIdForUpdate(workOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkOrder", workOrderId));
         plantAccessGuard.ensureAccessTo(order.getPlantId());
         return order;
