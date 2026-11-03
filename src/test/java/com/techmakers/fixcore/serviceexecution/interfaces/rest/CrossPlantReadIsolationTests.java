@@ -111,6 +111,38 @@ class CrossPlantReadIsolationTests {
                 .andExpect(jsonPath("$").isNotEmpty());
     }
 
+    @Test
+    void userDirectoryMustRespectPlantPermissions() throws Exception {
+        var operations = tokenFor("victor.salazar@fixcore.demo");
+        var carla = tokenFor("carla.garcia@fixcore.demo");
+
+        Integer rosaId = JsonPath.<List<Integer>>read(
+                response("/api/v1/users?email=rosa.quispe@fixcore.demo", operations),
+                "$[*].id").getFirst();
+
+        mockMvc.perform(get("/api/v1/users")
+                        .param("email", "rosa.quispe@fixcore.demo")
+                        .header("Authorization", carla))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+
+        mockMvc.perform(get("/api/v1/users/" + rosaId)
+                        .header("Authorization", carla))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/users/" + rosaId)
+                        .header("Authorization", operations))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/users/me")
+                        .header("Authorization", carla))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("carla.garcia@fixcore.demo"));
+
+        mockMvc.perform(get("/api/v1/users").header("Authorization", carla))
+                .andExpect(jsonPath("$[?(@.email == 'rosa.quispe@fixcore.demo')]").isEmpty());
+    }
+
     private int callaoId(String authorization) throws Exception {
         return JsonPath.<List<Integer>>read(response("/api/v1/plants", authorization),
                 "$[?(@.name == 'Planta Callao')].id").getFirst();
