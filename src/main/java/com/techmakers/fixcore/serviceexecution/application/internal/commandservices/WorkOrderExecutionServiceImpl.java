@@ -5,6 +5,7 @@ import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.PlanCompletionRecorder;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.StockConsumer;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.UserDirectory;
+import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.WorkOrderAccessPolicy;
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder;
 import com.techmakers.fixcore.serviceexecution.domain.model.commands.CompleteWorkOrderCommand;
 import com.techmakers.fixcore.serviceexecution.domain.model.commands.LogWorkCommand;
@@ -34,12 +35,14 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
     private final StockConsumer stockConsumer;
     private final PlanCompletionRecorder planCompletionRecorder;
     private final PlantAccessGuard plantAccessGuard;
+    private final WorkOrderAccessPolicy accessPolicy;
 
     public WorkOrderExecutionServiceImpl(WorkOrderRepository workOrderRepository, FailureRepository failureRepository,
                                          UserDirectory userDirectory, PartCatalog partCatalog,
                                          AssetStatusUpdater assetStatusUpdater, StockConsumer stockConsumer,
                                          PlanCompletionRecorder planCompletionRecorder,
-                                         PlantAccessGuard plantAccessGuard) {
+                                         PlantAccessGuard plantAccessGuard,
+                                         WorkOrderAccessPolicy accessPolicy) {
         this.workOrderRepository = workOrderRepository;
         this.failureRepository = failureRepository;
         this.userDirectory = userDirectory;
@@ -48,6 +51,7 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
         this.stockConsumer = stockConsumer;
         this.planCompletionRecorder = planCompletionRecorder;
         this.plantAccessGuard = plantAccessGuard;
+        this.accessPolicy = accessPolicy;
     }
 
     @Override
@@ -116,6 +120,7 @@ public class WorkOrderExecutionServiceImpl implements WorkOrderExecutionService 
         var order = workOrderRepository.findById(workOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkOrder", workOrderId));
         plantAccessGuard.ensureAccessTo(order.getPlantId());
+        accessPolicy.ensureCanExecute(order);
         return order;
     }
 }
