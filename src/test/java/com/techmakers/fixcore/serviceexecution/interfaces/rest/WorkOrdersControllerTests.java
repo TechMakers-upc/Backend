@@ -168,9 +168,10 @@ class WorkOrdersControllerTests {
 
     @Test
     void shouldRejectTechniciansFromOtherPlants() throws Exception {
-        Integer rosaId = idOf(
-                "/api/v1/users?email=rosa.quispe@fixcore.demo",
-                "$[*].id");
+        var foreignUsers = mockMvc.perform(get("/api/v1/users?email=rosa.quispe@fixcore.demo")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
+        Integer rosaId = JsonPath.<List<Integer>>read(foreignUsers, "$[*].id").getFirst();
 
         mockMvc.perform(post(ORDERS)
                         .header("Authorization", plantManager)

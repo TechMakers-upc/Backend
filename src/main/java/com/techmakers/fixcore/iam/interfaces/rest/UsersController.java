@@ -1,6 +1,8 @@
 package com.techmakers.fixcore.iam.interfaces.rest;
 
 import com.techmakers.fixcore.iam.domain.model.queries.GetAllUsersQuery;
+import com.techmakers.fixcore.iam.domain.model.aggregates.User;
+import com.techmakers.fixcore.shared.application.security.PlantAccessGuard;
 import com.techmakers.fixcore.iam.domain.model.queries.GetUserByEmailQuery;
 import com.techmakers.fixcore.iam.domain.model.queries.GetUserByIdQuery;
 import com.techmakers.fixcore.iam.domain.model.valueobjects.EmailAddress;
@@ -27,9 +29,11 @@ import java.util.List;
 public class UsersController {
 
     private final UserQueryService userQueryService;
+    private final PlantAccessGuard plantAccessGuard;
 
-    public UsersController(UserQueryService userQueryService) {
+    public UsersController(UserQueryService userQueryService, PlantAccessGuard plantAccessGuard) {
         this.userQueryService = userQueryService;
+        this.plantAccessGuard = plantAccessGuard;
     }
 
     @GetMapping
@@ -37,11 +41,11 @@ public class UsersController {
     public ResponseEntity<List<UserResource>> getUsers(@RequestParam(required = false) String email) {
         if (email != null) {
             var users = userQueryService.handle(new GetUserByEmailQuery(new EmailAddress(email)))
-                    .map(UserResourceAssembler::toResource).stream().toList();
+                    .filter(this::canView).map(UserResourceAssembler::toResource).stream().toList();
             return ResponseEntity.ok(users);
         }
         var users = userQueryService.handle(new GetAllUsersQuery()).stream()
-                .map(UserResourceAssembler::toResource).toList();
+                .filter(this::canView).map(UserResourceAssembler::toResource).toList();
         return ResponseEntity.ok(users);
     }
 
@@ -51,6 +55,12 @@ public class UsersController {
         return userQueryService.handle(new GetUserByIdQuery(userId))
                 .map(user -> ResponseEntity.ok(UserResourceAssembler.toResource(user)))
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+    }
+
+    private boolean canView(User user) {
+        return plantAccessGuard.restrictedPlantId()
+                .map(restricted -> restricted.equals(user.getPlantId()))
+                .orElse(true);
     }
 
     @GetMapping("/me")
