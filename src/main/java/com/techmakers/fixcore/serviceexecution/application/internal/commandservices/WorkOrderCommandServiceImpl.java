@@ -1,6 +1,7 @@
 package com.techmakers.fixcore.serviceexecution.application.internal.commandservices;
 
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.AssetCatalog;
+import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.WorkOrderCodeLock;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.PlanCatalog;
 import com.techmakers.fixcore.serviceexecution.application.outboundservices.acl.UserDirectory;
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder;
@@ -29,16 +30,18 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     private final UserDirectory userDirectory;
     private final PlanCatalog planCatalog;
     private final PlantAccessGuard plantAccessGuard;
+    private final WorkOrderCodeLock workOrderCodeLock;
 
     public WorkOrderCommandServiceImpl(WorkOrderRepository workOrderRepository, FailureRepository failureRepository,
                                        AssetCatalog assetCatalog, UserDirectory userDirectory, PlanCatalog planCatalog,
-                                       PlantAccessGuard plantAccessGuard) {
+                                       PlantAccessGuard plantAccessGuard, WorkOrderCodeLock workOrderCodeLock) {
         this.workOrderRepository = workOrderRepository;
         this.failureRepository = failureRepository;
         this.assetCatalog = assetCatalog;
         this.userDirectory = userDirectory;
         this.planCatalog = planCatalog;
         this.plantAccessGuard = plantAccessGuard;
+        this.workOrderCodeLock = workOrderCodeLock;
     }
 
     @Override
@@ -93,6 +96,7 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     }
 
     private WorkOrderCode nextCode() {
+        workOrderCodeLock.acquire();
         var year = Year.now().getValue();
         var last = workOrderRepository.findLastCodeStartingWith(WorkOrderCode.prefixFor(year))
                 .map(WorkOrderCode::sequence).orElse(0);
