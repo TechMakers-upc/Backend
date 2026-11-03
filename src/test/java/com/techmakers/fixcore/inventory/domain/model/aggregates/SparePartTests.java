@@ -37,6 +37,16 @@ class SparePartTests {
     }
 
     @Test
+    void shouldRejectStockIntegerOverflow() {
+        part.receive(Integer.MAX_VALUE);
+
+        assertThatThrownBy(() -> part.receive(1))
+                .isInstanceOf(BusinessRuleViolationException.class);
+
+        assertThat(part.getStock()).isEqualTo(Integer.MAX_VALUE);
+    }
+
+    @Test
     void shouldNotConsumeMoreThanAvailable() {
         part.receive(2);
         part.consume(2);
