@@ -92,7 +92,10 @@ class StockOperationsControllerTests {
 
     @Test
     void shouldRejectStockOperationsOnAnotherPlant() throws Exception {
-        Integer callaoPart = JsonPath.<List<Integer>>read(read("/api/v1/spare-parts"), "$[?(@.sku == 'MRD-SVE')].id").getFirst();
+        var foreignParts = mockMvc.perform(get("/api/v1/spare-parts")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
+        Integer callaoPart = JsonPath.<List<Integer>>read(foreignParts, "$[?(@.sku == 'MRD-SVE')].id").getFirst();
         mockMvc.perform(post("/api/v1/spare-parts/" + callaoPart + "/entries").header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"quantity\":10,\"reason\":\"OC-901\"}"))
                 .andExpect(status().isForbidden());

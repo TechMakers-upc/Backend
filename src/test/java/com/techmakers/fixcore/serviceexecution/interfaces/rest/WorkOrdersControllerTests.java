@@ -104,7 +104,10 @@ class WorkOrdersControllerTests {
         Integer completed = idOf(ORDERS, "$[?(@.code == 'OT-2026-0001')].id");
         mockMvc.perform(delete(ORDERS + "/" + completed).header("Authorization", plantManager))
                 .andExpect(status().isConflict());
-        Integer callaoPart = idOf("/api/v1/spare-parts", "$[?(@.sku == 'MRD-SVE')].id");
+        var foreignParts = mockMvc.perform(get("/api/v1/spare-parts")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
+        Integer callaoPart = JsonPath.<List<Integer>>read(foreignParts, "$[?(@.sku == 'MRD-SVE')].id").getFirst();
         Integer inProgress = idOf(ORDERS, "$[?(@.code == 'OT-2026-0010')].id");
         var miguel = tokenFor("miguel.torres@fixcore.demo");
         mockMvc.perform(post(ORDERS + "/" + inProgress + "/part-usages").header("Authorization", miguel)
