@@ -31,6 +31,12 @@ public class IamContextFacade {
                 .orElse(false);
     }
 
+    public Optional<Long> fetchTechnicianPlantId(Long userId) {
+        return userQueryService.handle(new GetUserByIdQuery(userId))
+                .filter(user -> user.getRole() == Roles.TECHNICIAN)
+                .map(User::getPlantId);
+    }
+
     public Optional<AccountSummary> fetchAccountByEmail(String email) {
         return userQueryService.handle(new GetUserByEmailQuery(new EmailAddress(email)))
                 .map(user -> new AccountSummary(user.getId(), user.getRole().name(), user.getPlantId()));

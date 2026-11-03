@@ -7,4 +7,6 @@ public interface UserDirectory {
     Optional<Long> userIdByEmail(String email);
 
     boolean isTechnician(Long userId);
+
+    Optional<Long> technicianPlantId(Long userId);
 }
