@@ -91,8 +91,25 @@ public class MaintenancePlanCommandServiceImpl implements MaintenancePlanCommand
     }
 
     private void ensureTechnician(PlanDetails details) {
-        if (details.technicianId() != null && !technicianDirectory.isTechnician(details.technicianId())) {
-            throw new BusinessRuleViolationException("User %d is not a technician".formatted(details.technicianId()));
+        var technicianId = details.technicianId();
+
+        if (technicianId == null) {
+            return;
+        }
+
+        if (!technicianDirectory.isTechnician(technicianId)) {
+            throw new BusinessRuleViolationException(
+                    "User %d is not a technician".formatted(technicianId));
+        }
+
+        var plantId = plantOf(details);
+
+        if (technicianDirectory.technicianPlantId(technicianId)
+                .filter(plantId::equals)
+                .isEmpty()) {
+            throw new BusinessRuleViolationException(
+                    "Technician %d does not belong to the maintenance plan plant"
+                            .formatted(technicianId));
         }
     }
 
