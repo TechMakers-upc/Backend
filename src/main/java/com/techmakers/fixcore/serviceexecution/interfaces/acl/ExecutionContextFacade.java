@@ -4,6 +4,7 @@ import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.Failure;
 import com.techmakers.fixcore.serviceexecution.domain.model.aggregates.WorkOrder;
 import com.techmakers.fixcore.serviceexecution.domain.model.queries.GetFailuresQuery;
 import com.techmakers.fixcore.serviceexecution.domain.model.queries.GetWorkOrdersQuery;
+import com.techmakers.fixcore.serviceexecution.domain.model.queries.GetWorkOrderByIdQuery;
 import com.techmakers.fixcore.serviceexecution.domain.model.valueobjects.WorkLogEntry;
 import com.techmakers.fixcore.serviceexecution.domain.services.FailureQueryService;
 import com.techmakers.fixcore.serviceexecution.domain.services.WorkOrderQueryService;
@@ -13,6 +14,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @Service
@@ -24,6 +26,11 @@ public class ExecutionContextFacade {
     public ExecutionContextFacade(FailureQueryService failureQueryService, WorkOrderQueryService workOrderQueryService) {
         this.failureQueryService = failureQueryService;
         this.workOrderQueryService = workOrderQueryService;
+    }
+
+    public Optional<WorkOrderSummary> fetchWorkOrderById(Long workOrderId) {
+        return workOrderQueryService.handle(new GetWorkOrderByIdQuery(workOrderId))
+                .map(this::toSummary);
     }
 
     public List<FailureSummary> fetchFailuresOfPlants(Collection<Long> plantIds) {
