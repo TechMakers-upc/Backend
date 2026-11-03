@@ -178,6 +178,28 @@ class MaintenancePlansControllerTests {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void suspendedPlanCannotRegisterCompletion() throws Exception {
+        var created = mockMvc.perform(post(PLANS)
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(compressorId, 30, technicianId)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Integer planId = JsonPath.read(created, "$.id");
+
+        mockMvc.perform(post(PLANS + "/" + planId + "/suspension")
+                        .header("Authorization", plantManager))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post(PLANS + "/" + planId + "/completions")
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"completedOn\":\"%s\"}".formatted(LocalDate.now())))
+                .andExpect(status().isConflict());
+    }
+
     private String body(Integer assetId, int frequencyDays, Integer technician) {
         return """
                 {"assetId":%d,"title":"Inspección de prueba","tasks":"Revisar","frequencyDays":%d,
