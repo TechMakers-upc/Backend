@@ -107,6 +107,22 @@ class MaintenancePlansControllerTests {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void shouldRejectForeignTechnicianWhenCreatingPlan() throws Exception {
+        var foreignUsers = mockMvc.perform(get("/api/v1/users")
+                        .param("email", "rosa.quispe@fixcore.demo")
+                        .header("Authorization", tokenFor("victor.salazar@fixcore.demo")))
+                .andReturn().getResponse().getContentAsString();
+
+        Integer rosaId = JsonPath.<List<Integer>>read(foreignUsers, "$[*].id").getFirst();
+
+        mockMvc.perform(post(PLANS)
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(compressorId, 30, rosaId)))
+                .andExpect(status().isConflict());
+    }
+
     private String body(Integer assetId, int frequencyDays, Integer technician) {
         return """
                 {"assetId":%d,"title":"Inspección de prueba","tasks":"Revisar","frequencyDays":%d,
