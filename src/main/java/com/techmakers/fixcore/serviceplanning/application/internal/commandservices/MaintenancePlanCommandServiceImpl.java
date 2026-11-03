@@ -2,6 +2,7 @@ package com.techmakers.fixcore.serviceplanning.application.internal.commandservi
 
 import com.techmakers.fixcore.serviceplanning.application.outboundservices.acl.AssetCatalog;
 import com.techmakers.fixcore.serviceplanning.application.outboundservices.acl.TechnicianDirectory;
+import com.techmakers.fixcore.serviceplanning.application.outboundservices.acl.MaintenancePlanCompletionAccessPolicy;
 import com.techmakers.fixcore.serviceplanning.domain.model.aggregates.MaintenancePlan;
 import com.techmakers.fixcore.serviceplanning.domain.model.commands.*;
 import com.techmakers.fixcore.serviceplanning.domain.model.valueobjects.PlanDetails;
@@ -23,13 +24,16 @@ public class MaintenancePlanCommandServiceImpl implements MaintenancePlanCommand
     private final AssetCatalog assetCatalog;
     private final TechnicianDirectory technicianDirectory;
     private final PlantAccessGuard plantAccessGuard;
+    private final MaintenancePlanCompletionAccessPolicy completionAccessPolicy;
 
     public MaintenancePlanCommandServiceImpl(MaintenancePlanRepository planRepository, AssetCatalog assetCatalog,
-                                             TechnicianDirectory technicianDirectory, PlantAccessGuard plantAccessGuard) {
+                                             TechnicianDirectory technicianDirectory, PlantAccessGuard plantAccessGuard,
+                                             MaintenancePlanCompletionAccessPolicy completionAccessPolicy) {
         this.planRepository = planRepository;
         this.assetCatalog = assetCatalog;
         this.technicianDirectory = technicianDirectory;
         this.plantAccessGuard = plantAccessGuard;
+        this.completionAccessPolicy = completionAccessPolicy;
     }
 
     @Override
@@ -81,6 +85,7 @@ public class MaintenancePlanCommandServiceImpl implements MaintenancePlanCommand
     @Override
     public MaintenancePlan handle(RegisterPlanCompletionCommand command) {
         var plan = findPlan(command.planId());
+        completionAccessPolicy.ensureCanComplete(plan);
         plan.registerCompletion(command.completedOn());
         return planRepository.save(plan);
     }
