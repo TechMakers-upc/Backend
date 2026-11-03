@@ -88,6 +88,40 @@ class ContextIntegrationTests {
                 .andExpect(jsonPath("$.nextDueDate").value(LocalDate.now().plusDays(30).toString()));
     }
 
+    @Test
+    void shouldRollbackWorkOrderPartUsageWhenStockIsInsufficient() throws Exception {
+        Integer assetId = createAsset("INT-ROLLBACK");
+        String order = createOrder("corrective", assetId, null, null);
+
+        mockMvc.perform(post(order + "/start")
+                        .header("Authorization", technician))
+                .andExpect(status().isOk());
+
+        Integer bearing = idOf(
+                "/api/v1/spare-parts?plantId=" + plantId,
+                "$[?(@.sku == 'RD-6205')].id");
+
+        Integer stockBefore = idOf(
+                "/api/v1/spare-parts/" + bearing,
+                "$.stock");
+
+        mockMvc.perform(post(order + "/part-usages")
+                        .header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"partId\":%d,\"quantity\":%d}"
+                                .formatted(bearing, stockBefore + 1)))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(get(order)
+                        .header("Authorization", technician))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.partsUsed").isEmpty());
+
+        mockMvc.perform(get("/api/v1/spare-parts/" + bearing)
+                        .header("Authorization", plantManager))
+                .andExpect(jsonPath("$.stock").value(stockBefore));
+    }
+
     private Integer createAsset(String code) throws Exception {
         return JsonPath.read(perform(post("/api/v1/assets"), plantManager, """
                 {"plantId":%d,"code":"%s","name":"Equipo integrado","category":"mixer","criticality":"medium"}"""
