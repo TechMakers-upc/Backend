@@ -46,6 +46,10 @@ public class WorkOrderQueryServiceImpl implements WorkOrderQueryService {
 
     @Override
     public Optional<WorkOrder> handle(GetWorkOrderByIdQuery query) {
-        return workOrderRepository.findById(query.workOrderId());
+        return workOrderRepository.findById(query.workOrderId())
+                .map(order -> {
+                    accessPolicy.ensureCanRead(order);
+                    return order;
+                });
     }
 }
