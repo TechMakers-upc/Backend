@@ -1,12 +1,13 @@
 package com.techmakers.fixcore.iam.application.internal.eventhandlers;
 
 import com.techmakers.fixcore.iam.application.outboundservices.acl.PlantDirectory;
-import com.techmakers.fixcore.iam.domain.model.commands.SignUpCommand;
+import com.techmakers.fixcore.iam.application.outboundservices.hashing.HashingService;
+import com.techmakers.fixcore.iam.domain.model.aggregates.User;
 import com.techmakers.fixcore.iam.domain.model.valueobjects.EmailAddress;
 import com.techmakers.fixcore.iam.domain.model.valueobjects.FullName;
 import com.techmakers.fixcore.iam.domain.model.valueobjects.Roles;
 import com.techmakers.fixcore.iam.domain.repositories.UserRepository;
-import com.techmakers.fixcore.iam.domain.services.UserCommandService;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -34,14 +35,14 @@ public class DemoUsersSeeder {
             new DemoUser("luis.huaman@fixcore.demo", "Luis Huamán", Roles.TECHNICIAN, "Planta Arequipa", "Técnico hidráulico"));
 
     private final UserRepository userRepository;
-    private final UserCommandService userCommandService;
+    private final HashingService hashingService;
     private final PlantDirectory plantDirectory;
     private final String demoPassword;
 
-    public DemoUsersSeeder(UserRepository userRepository, UserCommandService userCommandService,
+    public DemoUsersSeeder(UserRepository userRepository, HashingService hashingService,
                            PlantDirectory plantDirectory, @Value("${fixcore.seed.demo-users.password}") String demoPassword) {
         this.userRepository = userRepository;
-        this.userCommandService = userCommandService;
+        this.hashingService = hashingService;
         this.plantDirectory = plantDirectory;
         this.demoPassword = demoPassword;
     }
@@ -52,9 +53,10 @@ public class DemoUsersSeeder {
         DEMO_USERS.stream()
                 .filter(demoUser -> !userRepository.existsByEmail(new EmailAddress(demoUser.email())))
                 .filter(demoUser -> demoUser.plantName() == null || plantIdOf(demoUser) != null)
-                .forEach(demoUser -> userCommandService.handle(new SignUpCommand(
-                        new EmailAddress(demoUser.email()), demoPassword, new FullName(demoUser.fullName()),
-                        demoUser.jobTitle(), plantIdOf(demoUser), demoUser.role())));
+                .forEach(demoUser -> userRepository.save(new User(
+                        new EmailAddress(demoUser.email()), hashingService.encode(demoPassword),
+                        new FullName(demoUser.fullName()), demoUser.jobTitle(),
+                        plantIdOf(demoUser), demoUser.role())));
     }
 
     private Long plantIdOf(DemoUser demoUser) {
