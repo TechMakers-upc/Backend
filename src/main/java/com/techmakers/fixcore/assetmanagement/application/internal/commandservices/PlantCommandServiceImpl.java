@@ -7,6 +7,7 @@ import com.techmakers.fixcore.assetmanagement.domain.model.commands.UpdatePlantC
 import com.techmakers.fixcore.assetmanagement.domain.repositories.AssetRepository;
 import com.techmakers.fixcore.assetmanagement.domain.repositories.PlantRepository;
 import com.techmakers.fixcore.assetmanagement.domain.services.PlantCommandService;
+import com.techmakers.fixcore.shared.application.security.PlantAccessGuard;
 import com.techmakers.fixcore.shared.domain.exceptions.BusinessRuleViolationException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceAlreadyExistsException;
 import com.techmakers.fixcore.shared.domain.exceptions.ResourceNotFoundException;
@@ -19,10 +20,13 @@ public class PlantCommandServiceImpl implements PlantCommandService {
 
     private final PlantRepository plantRepository;
     private final AssetRepository assetRepository;
+    private final PlantAccessGuard plantAccessGuard;
 
-    public PlantCommandServiceImpl(PlantRepository plantRepository, AssetRepository assetRepository) {
+    public PlantCommandServiceImpl(PlantRepository plantRepository, AssetRepository assetRepository,
+                                   PlantAccessGuard plantAccessGuard) {
         this.plantRepository = plantRepository;
         this.assetRepository = assetRepository;
+        this.plantAccessGuard = plantAccessGuard;
     }
 
     @Override
@@ -37,6 +41,7 @@ public class PlantCommandServiceImpl implements PlantCommandService {
     public Plant handle(UpdatePlantCommand command) {
         var plant = plantRepository.findById(command.plantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Plant", command.plantId()));
+        plantAccessGuard.ensureAccessTo(plant.getId());
         if (plantRepository.existsByNameAndIdNot(command.name(), command.plantId())) {
             throw new ResourceAlreadyExistsException("Plant", "name", command.name().trim());
         }

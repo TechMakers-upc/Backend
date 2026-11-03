@@ -60,7 +60,7 @@ public class PlantsController {
     }
 
     @PutMapping("/{plantId}")
-    @PreAuthorize("hasRole('OPERATIONS_MANAGER')")
+    @PreAuthorize("hasAnyRole('OPERATIONS_MANAGER', 'PLANT_MANAGER')")
     @Operation(summary = "Update the details of a plant")
     public ResponseEntity<PlantResource> updatePlant(@PathVariable Long plantId,
                                                      @Valid @RequestBody SavePlantResource resource) {

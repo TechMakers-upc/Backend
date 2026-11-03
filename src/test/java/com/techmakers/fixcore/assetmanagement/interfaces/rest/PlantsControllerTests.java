@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.hamcrest.Matchers.hasItems;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -67,6 +69,20 @@ class PlantsControllerTests {
                         .contentType(MediaType.APPLICATION_JSON).content(body("Planta Piura", "Piura")))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403));
+        mockMvc.perform(delete(PLANTS + "/" + plantIdOf("Planta Ate")).header("Authorization", plantManager))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldLetPlantManagersEditOnlyTheirOwnPlant() throws Exception {
+        mockMvc.perform(put(PLANTS + "/" + plantIdOf("Planta Ate")).header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Planta Ate\",\"city\":\"Lima\",\"address\":\"Av. Nicolás Ayllón 2480\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.address").value("Av. Nicolás Ayllón 2480"));
+        mockMvc.perform(put(PLANTS + "/" + plantIdOf("Planta Callao")).header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON).content(body("Planta Callao", "Callao")))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -81,6 +97,12 @@ class PlantsControllerTests {
 
     private String body(String name, String city) {
         return "{\"name\":\"%s\",\"city\":\"%s\",\"address\":\"Av. Industrial 100\"}".formatted(name, city);
+    }
+
+    private Integer plantIdOf(String name) throws Exception {
+        var plants = mockMvc.perform(get(PLANTS).header("Authorization", operationsManager))
+                .andReturn().getResponse().getContentAsString();
+        return JsonPath.<List<Integer>>read(plants, "$[?(@.name == '%s')].id".formatted(name)).getFirst();
     }
 
     private String tokenFor(String email) throws Exception {
