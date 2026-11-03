@@ -68,6 +68,49 @@ class CrossPlantReadIsolationTests {
                 .andExpect(jsonPath("$[?(@.plantId == %d)]".formatted(callao)).isEmpty());
     }
 
+    @Test
+    void foreignInventoryAndStockHistoryMustBeProtected() throws Exception {
+        var operations = tokenFor("victor.salazar@fixcore.demo");
+        var carla = tokenFor("carla.garcia@fixcore.demo");
+        int callao = callaoId(operations);
+
+        var foreignParts = response("/api/v1/spare-parts?plantId=" + callao, operations);
+        Integer part = JsonPath.<List<Integer>>read(
+                foreignParts, "$[?(@.sku == 'MRD-SVE')].id").getFirst();
+
+        mockMvc.perform(get("/api/v1/spare-parts")
+                        .param("plantId", String.valueOf(callao))
+                        .header("Authorization", carla))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/v1/spare-parts/" + part)
+                        .header("Authorization", carla))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/v1/spare-parts")
+                        .param("plantId", String.valueOf(callao))
+                        .param("belowMinimum", "true")
+                        .header("Authorization", carla))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/v1/stock-movements")
+                        .param("plantId", String.valueOf(callao))
+                        .header("Authorization", carla))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/v1/stock-movements")
+                        .param("partId", part.toString())
+                        .header("Authorization", carla))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+
+        mockMvc.perform(get("/api/v1/stock-movements")
+                        .param("partId", part.toString())
+                        .header("Authorization", operations))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isNotEmpty());
+    }
+
     private int callaoId(String authorization) throws Exception {
         return JsonPath.<List<Integer>>read(response("/api/v1/plants", authorization),
                 "$[?(@.name == 'Planta Callao')].id").getFirst();
