@@ -48,7 +48,7 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
         plantAccessGuard.ensureAccessTo(plantId);
         var creatorId = userDirectory.userIdByEmail(command.createdBy())
                 .orElseThrow(() -> new ResourceNotFoundException("User", command.createdBy()));
-        ensureTechnician(command.technicianId());
+        ensureTechnician(command.technicianId(), plantId);
         var failure = command.failureId() == null ? null : failureRepository.findById(command.failureId())
                 .orElseThrow(() -> new ResourceNotFoundException("Failure", command.failureId()));
         if (failure != null && !failure.getAssetId().equals(command.assetId())) {
@@ -78,7 +78,7 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     @Override
     public WorkOrder handle(AssignWorkOrderCommand command) {
         var order = findOrder(command.workOrderId());
-        ensureTechnician(command.technicianId());
+        ensureTechnician(command.technicianId(), order.getPlantId());
         order.assign(command.technicianId());
         return workOrderRepository.save(order);
     }
@@ -99,9 +99,22 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
         return WorkOrderCode.of(year, last + 1);
     }
 
-    private void ensureTechnician(Long technicianId) {
-        if (technicianId != null && !userDirectory.isTechnician(technicianId)) {
-            throw new BusinessRuleViolationException("User %d is not a technician".formatted(technicianId));
+    private void ensureTechnician(Long technicianId, Long plantId) {
+        if (technicianId == null) {
+            return;
+        }
+
+        if (!userDirectory.isTechnician(technicianId)) {
+            throw new BusinessRuleViolationException(
+                    "User %d is not a technician".formatted(technicianId));
+        }
+
+        if (userDirectory.technicianPlantId(technicianId)
+                .filter(plantId::equals)
+                .isEmpty()) {
+            throw new BusinessRuleViolationException(
+                    "Technician %d does not belong to the work order plant"
+                            .formatted(technicianId));
         }
     }
 
