@@ -53,6 +53,7 @@ public class UsersController {
     @Operation(summary = "Get a user by identifier")
     public ResponseEntity<UserResource> getUserById(@PathVariable Long userId) {
         return userQueryService.handle(new GetUserByIdQuery(userId))
+                .filter(this::canView)
                 .map(user -> ResponseEntity.ok(UserResourceAssembler.toResource(user)))
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
