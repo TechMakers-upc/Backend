@@ -18,4 +18,6 @@ public interface WorkOrderJpaRepository extends JpaRepository<WorkOrderEntity, L
     boolean existsByCode(String code);
 
     boolean existsByAssetIdAndStatusAndIdNot(Long assetId, WorkOrderStatus status, Long id);
+
+    boolean existsByAssetIdAndStatus(Long assetId, WorkOrderStatus status);
 }

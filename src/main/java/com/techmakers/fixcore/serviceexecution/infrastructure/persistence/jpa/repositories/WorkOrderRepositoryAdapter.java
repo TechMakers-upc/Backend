@@ -59,6 +59,11 @@ public class WorkOrderRepositoryAdapter implements WorkOrderRepository {
     }
 
     @Override
+    public boolean existsInProgressForAsset(Long assetId) {
+        return workOrderJpaRepository.existsByAssetIdAndStatus(assetId, WorkOrderStatus.IN_PROGRESS);
+    }
+
+    @Override
     public void deleteById(Long id) {
         workOrderJpaRepository.deleteById(id);
     }
