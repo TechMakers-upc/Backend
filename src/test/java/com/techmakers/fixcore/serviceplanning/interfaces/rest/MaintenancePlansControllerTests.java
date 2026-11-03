@@ -148,6 +148,36 @@ class MaintenancePlansControllerTests {
                 .andExpect(status().isConflict());
     }
 
+    @Test
+    void technicianCannotCompleteAnotherTechniciansPlan() throws Exception {
+        Integer miguelId = JsonPath.<List<Integer>>read(
+                read("/api/v1/users?email=miguel.torres@fixcore.demo"),
+                "$[*].id").getFirst();
+
+        var created = mockMvc.perform(post(PLANS)
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(compressorId, 30, miguelId)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Integer planId = JsonPath.read(created, "$.id");
+
+        var completion = "{\"completedOn\":\"%s\"}".formatted(LocalDate.now());
+
+        mockMvc.perform(post(PLANS + "/" + planId + "/completions")
+                        .header("Authorization", technician)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(completion))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post(PLANS + "/" + planId + "/completions")
+                        .header("Authorization", plantManager)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(completion))
+                .andExpect(status().isOk());
+    }
+
     private String body(Integer assetId, int frequencyDays, Integer technician) {
         return """
                 {"assetId":%d,"title":"Inspección de prueba","tasks":"Revisar","frequencyDays":%d,
