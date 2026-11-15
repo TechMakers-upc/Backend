@@ -29,7 +29,7 @@ class UsersControllerTests {
 
     @BeforeEach
     void signInAsDemoUser() throws Exception {
-        var response = mockMvc.perform(post("/api/v1/authentication/sign-in")
+        var response = mockMvc.perform(post("/api/v1/authentications/sign-ins")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"carla.garcia@fixcore.demo\",\"password\":\"FixCore2026\"}"))
                 .andExpect(status().isOk())

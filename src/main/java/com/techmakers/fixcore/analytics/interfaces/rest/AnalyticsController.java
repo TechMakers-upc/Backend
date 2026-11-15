@@ -31,7 +31,7 @@ public class AnalyticsController {
         this.analyticsQueryService = analyticsQueryService;
     }
 
-    @GetMapping("/summary")
+    @GetMapping("/summaries")
     @Operation(summary = "Get maintenance KPIs for a plant or for every plant in scope")
     public ResponseEntity<MaintenanceSummaryResource> getSummary(@RequestParam(required = false) Long plantId,
                                                                  @RequestParam(required = false) LocalDate from,
@@ -40,7 +40,7 @@ public class AnalyticsController {
         return ResponseEntity.ok(AnalyticsResourceAssembler.toResource(summary));
     }
 
-    @GetMapping("/downtime-ranking")
+    @GetMapping("/downtime-rankings")
     @Operation(summary = "Rank machines by hours lost to stopped lines")
     public ResponseEntity<List<DowntimeEntryResource>> getDowntimeRanking(@RequestParam(required = false) Long plantId,
                                                                           @RequestParam(required = false) LocalDate from,
@@ -49,7 +49,7 @@ public class AnalyticsController {
         return ResponseEntity.ok(ranking.stream().map(AnalyticsResourceAssembler::toResource).toList());
     }
 
-    @GetMapping("/technicians/{technicianId}/performance")
+    @GetMapping("/technicians/{technicianId}/performances")
     @Operation(summary = "Get the workload and repair times of a technician")
     public ResponseEntity<TechnicianPerformanceResource> getTechnicianPerformance(
             @PathVariable Long technicianId,

@@ -33,7 +33,7 @@ public class WorkOrderExecutionController {
         this.executionService = executionService;
     }
 
-    @PostMapping("/start")
+    @PostMapping("/starts")
     @Operation(summary = "Start the repair clock of a pending work order")
     public ResponseEntity<WorkOrderResource> start(@PathVariable Long workOrderId) {
         return ok(executionService.handle(new StartWorkOrderCommand(workOrderId)));
@@ -55,7 +55,7 @@ public class WorkOrderExecutionController {
                 resource.quantity(), principal.getName())));
     }
 
-    @PostMapping("/completion")
+    @PostMapping("/completions")
     @Operation(summary = "Close a work order with the solution applied")
     public ResponseEntity<WorkOrderResource> complete(@PathVariable Long workOrderId,
                                                       @Valid @RequestBody CompleteWorkOrderResource resource) {

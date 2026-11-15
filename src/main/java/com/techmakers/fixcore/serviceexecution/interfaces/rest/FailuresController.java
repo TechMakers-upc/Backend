@@ -67,7 +67,7 @@ public class FailuresController {
         return ResponseEntity.created(location).body(FailureResourceAssembler.toResource(failure));
     }
 
-    @PatchMapping("/{failureId}/priority")
+    @PatchMapping("/{failureId}/priorities")
     @PreAuthorize("hasRole('PLANT_MANAGER')")
     @Operation(summary = "Set the priority of a failure")
     public ResponseEntity<FailureResource> prioritize(@PathVariable Long failureId,
@@ -77,7 +77,7 @@ public class FailuresController {
         return ResponseEntity.ok(FailureResourceAssembler.toResource(failure));
     }
 
-    @PostMapping("/{failureId}/resolution")
+    @PostMapping("/{failureId}/resolutions")
     @PreAuthorize("hasRole('PLANT_MANAGER')")
     @Operation(summary = "Mark a failure as resolved")
     public ResponseEntity<FailureResource> resolve(@PathVariable Long failureId) {

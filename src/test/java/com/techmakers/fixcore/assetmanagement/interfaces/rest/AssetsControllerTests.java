@@ -84,7 +84,7 @@ class AssetsControllerTests {
                 .andReturn().getResponse().getContentAsString();
         Integer id = JsonPath.read(created, "$.id");
 
-        mockMvc.perform(patch(ASSETS + "/" + id + "/status").header("Authorization", technician)
+        mockMvc.perform(patch(ASSETS + "/" + id + "/statuses").header("Authorization", technician)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"maintenance\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("maintenance"));
@@ -142,7 +142,7 @@ class AssetsControllerTests {
     }
 
     private String tokenFor(String email) throws Exception {
-        var response = mockMvc.perform(post("/api/v1/authentication/sign-in").contentType(MediaType.APPLICATION_JSON)
+        var response = mockMvc.perform(post("/api/v1/authentications/sign-ins").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
                 .andReturn().getResponse().getContentAsString();
         return "Bearer " + JsonPath.read(response, "$.token");

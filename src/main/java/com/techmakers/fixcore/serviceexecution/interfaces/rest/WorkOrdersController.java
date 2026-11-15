@@ -81,7 +81,7 @@ public class WorkOrdersController {
         return ResponseEntity.ok(WorkOrderResourceAssembler.toResource(order));
     }
 
-    @PatchMapping("/{workOrderId}/assignment")
+    @PatchMapping("/{workOrderId}/assignments")
     @PreAuthorize(MANAGERS)
     @Operation(summary = "Assign a technician to a work order")
     public ResponseEntity<WorkOrderResource> assign(@PathVariable Long workOrderId,

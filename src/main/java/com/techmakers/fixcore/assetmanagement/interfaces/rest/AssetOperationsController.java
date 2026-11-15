@@ -26,7 +26,7 @@ public class AssetOperationsController {
         this.assetCommandService = assetCommandService;
     }
 
-    @PatchMapping("/status")
+    @PatchMapping("/statuses")
     @PreAuthorize("hasAnyRole('PLANT_MANAGER', 'TECHNICIAN')")
     @Operation(summary = "Change the operating status of an asset")
     public ResponseEntity<AssetResource> changeStatus(@PathVariable Long assetId,

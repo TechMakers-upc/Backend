@@ -50,36 +50,36 @@ class AnalyticsControllerTests {
     @Test
     void shouldScopeTheSummaryToThePlantManagerPlant() throws Exception {
         List<Integer> ateAssets = JsonPath.read(read("/api/v1/assets?plantId=" + ate), "$[*].id");
-        mockMvc.perform(get(ANALYTICS + "/summary").header("Authorization", plantManager))
+        mockMvc.perform(get(ANALYTICS + "/summaries").header("Authorization", plantManager))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.assets").value(ateAssets.size()))
                 .andExpect(jsonPath("$.orders['in-progress']").isNumber())
                 .andExpect(jsonPath("$.technicians").value(greaterThanOrEqualTo(2)));
-        mockMvc.perform(get(ANALYTICS + "/summary").param("plantId", callao.toString()).header("Authorization", plantManager))
+        mockMvc.perform(get(ANALYTICS + "/summaries").param("plantId", callao.toString()).header("Authorization", plantManager))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get(ANALYTICS + "/summary").header("Authorization", technician))
+        mockMvc.perform(get(ANALYTICS + "/summaries").header("Authorization", technician))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void shouldGiveOperationsManagersEveryPlant() throws Exception {
         List<Integer> allAssets = JsonPath.read(read("/api/v1/assets"), "$[*].id");
-        mockMvc.perform(get(ANALYTICS + "/summary").header("Authorization", operationsManager))
+        mockMvc.perform(get(ANALYTICS + "/summaries").header("Authorization", operationsManager))
                 .andExpect(jsonPath("$.assets").value(allAssets.size()));
-        mockMvc.perform(get(ANALYTICS + "/summary").param("from", "2026-02-01").param("to", "2026-01-01")
+        mockMvc.perform(get(ANALYTICS + "/summaries").param("from", "2026-02-01").param("to", "2026-01-01")
                         .header("Authorization", operationsManager))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldRankDowntimeAndReportTechnicianPerformance() throws Exception {
-        var ranking = mockMvc.perform(get(ANALYTICS + "/downtime-ranking").header("Authorization", operationsManager))
+        var ranking = mockMvc.perform(get(ANALYTICS + "/downtime-rankings").header("Authorization", operationsManager))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         List<Double> hours = JsonPath.read(ranking, "$[*].hours");
         assertThat(hours).isNotEmpty().isSortedAccordingTo((a, b) -> Double.compare(b, a));
 
         Integer joseId = JsonPath.<List<Integer>>read(read("/api/v1/users?email=jose.ramirez@fixcore.demo"), "$[*].id").getFirst();
-        mockMvc.perform(get(ANALYTICS + "/technicians/" + joseId + "/performance").header("Authorization", plantManager))
+        mockMvc.perform(get(ANALYTICS + "/technicians/" + joseId + "/performances").header("Authorization", plantManager))
                 .andExpect(jsonPath("$.technicianId").value(joseId))
                 .andExpect(jsonPath("$.completed").value(greaterThanOrEqualTo(1)));
     }
@@ -93,7 +93,7 @@ class AnalyticsControllerTests {
     }
 
     private String tokenFor(String email) throws Exception {
-        var response = mockMvc.perform(post("/api/v1/authentication/sign-in").contentType(MediaType.APPLICATION_JSON)
+        var response = mockMvc.perform(post("/api/v1/authentications/sign-ins").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
                 .andReturn().getResponse().getContentAsString();
         return "Bearer " + JsonPath.read(response, "$.token");

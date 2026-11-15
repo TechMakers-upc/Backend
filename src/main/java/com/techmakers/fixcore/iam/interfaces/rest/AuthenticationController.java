@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
-@RequestMapping(value = "/api/v1/authentication", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/authentications", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Authentication", description = "Sign up and sign in endpoints")
 public class AuthenticationController {
 
@@ -30,7 +30,7 @@ public class AuthenticationController {
         this.userCommandService = userCommandService;
     }
 
-    @PostMapping("/sign-up")
+    @PostMapping("/sign-ups")
     @PreAuthorize("hasAnyRole('PLANT_MANAGER', 'OPERATIONS_MANAGER')")
     @Operation(summary = "Register a new user account")
     public ResponseEntity<UserResource> signUp(@Valid @RequestBody SignUpResource resource) {
@@ -40,7 +40,7 @@ public class AuthenticationController {
         return ResponseEntity.created(location).body(UserResourceAssembler.toResource(user));
     }
 
-    @PostMapping("/sign-in")
+    @PostMapping("/sign-ins")
     @Operation(summary = "Authenticate a user and issue a bearer token")
     public ResponseEntity<AuthenticatedUserResource> signIn(@Valid @RequestBody SignInResource resource) {
         var authenticatedUser = userCommandService.handle(AuthenticationCommandAssembler.toCommand(resource));

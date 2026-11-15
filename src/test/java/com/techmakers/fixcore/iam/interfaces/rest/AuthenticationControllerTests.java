@@ -25,8 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class AuthenticationControllerTests {
 
-    private static final String SIGN_UP = "/api/v1/authentication/sign-up";
-    private static final String SIGN_IN = "/api/v1/authentication/sign-in";
+    private static final String SIGN_UP = "/api/v1/authentications/sign-ups";
+    private static final String SIGN_IN = "/api/v1/authentications/sign-ins";
 
     @Autowired
     private MockMvc mockMvc;

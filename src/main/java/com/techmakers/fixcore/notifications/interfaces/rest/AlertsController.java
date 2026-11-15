@@ -46,7 +46,7 @@ public class AlertsController {
                 .toList());
     }
 
-    @GetMapping("/unread-count")
+    @GetMapping("/unread-counts")
     @Operation(summary = "Count unread alerts for the signed-in user")
     public ResponseEntity<Map<String, Long>> getUnreadCount(Principal principal) {
         var email = principal.getName();
@@ -61,7 +61,7 @@ public class AlertsController {
         return ResponseEntity.ok(Map.of("unread", unread));
     }
 
-    @PatchMapping("/{alertId}/read")
+    @PatchMapping("/{alertId}/reads")
     @Operation(summary = "Mark a visible alert as read")
     public ResponseEntity<Void> markRead(@PathVariable String alertId,
                                          Principal principal) {

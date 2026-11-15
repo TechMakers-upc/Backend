@@ -133,7 +133,7 @@ class StockOperationsControllerTests {
     }
 
     private String tokenFor(String email) throws Exception {
-        var response = mockMvc.perform(post("/api/v1/authentication/sign-in").contentType(MediaType.APPLICATION_JSON)
+        var response = mockMvc.perform(post("/api/v1/authentications/sign-ins").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
                 .andReturn().getResponse().getContentAsString();
         return "Bearer " + JsonPath.read(response, "$.token");

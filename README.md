@@ -115,16 +115,16 @@ Every endpoint lives under `/api/v1` and, except authentication and health, need
 
 | Area | Endpoints |
 |---|---|
-| Authentication | `POST /authentication/sign-in` (public), `POST /authentication/sign-up` (managers only) |
+| Authentication | `POST /authentications/sign-ins` (public), `POST /authentications/sign-ups` (managers only) |
 | Users | `GET /users`, `GET /users/me`, `GET /users/{id}`, `GET /roles` |
 | Plants | `GET POST /plants`, `GET PUT DELETE /plants/{id}` |
-| Machines | `GET POST /assets`, `GET PUT DELETE /assets/{id}`, `PATCH /assets/{id}/status`, `POST /assets/{id}/manuals`, `DELETE /assets/{id}/manuals/{index}` |
-| Maintenance plans | `GET POST /maintenance-plans`, `GET PUT DELETE /maintenance-plans/{id}`, `PATCH .../schedule`, `POST .../suspension`, `POST .../reactivation`, `POST .../completions` |
+| Machines | `GET POST /assets`, `GET PUT DELETE /assets/{id}`, `PATCH /assets/{id}/statuses`, `POST /assets/{id}/manuals`, `DELETE /assets/{id}/manuals/{index}` |
+| Maintenance plans | `GET POST /maintenance-plans`, `GET PUT DELETE /maintenance-plans/{id}`, `PATCH .../schedules`, `POST .../suspensions`, `POST .../reactivations`, `POST .../completions` |
 | Spare parts | `GET POST /spare-parts`, `GET PUT DELETE /spare-parts/{id}`, `POST .../entries`, `POST .../adjustments`, `POST .../consumptions`, `GET /stock-movements` |
-| Failures | `GET POST /failures`, `GET /failures/{id}`, `PATCH .../priority`, `POST .../resolution` |
-| Work orders | `GET POST /work-orders`, `GET PUT DELETE /work-orders/{id}`, `PATCH .../assignment`, `POST .../start`, `POST .../work-logs`, `POST .../part-usages`, `POST .../completion` |
-| Analytics | `GET /analytics/summary`, `GET /analytics/downtime-ranking`, `GET /analytics/technicians/{id}/performance` (optional `plantId`, `from`, `to`) |
-| Alerts | `GET /alerts`, `GET /alerts/unread-count`, `PATCH /alerts/{alertId}/read` |
+| Failures | `GET POST /failures`, `GET /failures/{id}`, `PATCH .../priorities`, `POST .../resolutions` |
+| Work orders | `GET POST /work-orders`, `GET PUT DELETE /work-orders/{id}`, `PATCH .../assignments`, `POST .../starts`, `POST .../work-logs`, `POST .../part-usages`, `POST .../completions` |
+| Analytics | `GET /analytics/summaries`, `GET /analytics/downtime-rankings`, `GET /analytics/technicians/{id}/performances` (optional `plantId`, `from`, `to`) |
+| Alerts | `GET /alerts`, `GET /alerts/unread-counts`, `PATCH /alerts/{alertId}/reads` |
 
 Swagger UI documents every request and response body.
 

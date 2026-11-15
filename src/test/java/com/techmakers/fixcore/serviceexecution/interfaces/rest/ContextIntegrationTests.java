@@ -50,7 +50,7 @@ class ContextIntegrationTests {
         expectAssetStatus(assetId, "down");
 
         String order = createOrder("corrective", assetId, failureId, null);
-        mockMvc.perform(post(order + "/start").header("Authorization", technician)).andExpect(status().isOk());
+        mockMvc.perform(post(order + "/starts").header("Authorization", technician)).andExpect(status().isOk());
         expectAssetStatus(assetId, "down");
 
         Integer bearing = idOf("/api/v1/spare-parts?plantId=" + plantId, "$[?(@.sku == 'RD-6205')].id");
@@ -78,7 +78,7 @@ class ContextIntegrationTests {
                  "nextDueDate":"2026-12-01","technicianId":%d}""".formatted(assetId, technicianId)), "$.id");
 
         String order = createOrder("preventive", assetId, null, planId);
-        mockMvc.perform(post(order + "/start").header("Authorization", technician)).andExpect(status().isOk());
+        mockMvc.perform(post(order + "/starts").header("Authorization", technician)).andExpect(status().isOk());
         expectAssetStatus(assetId, "maintenance");
 
         complete(order);
@@ -93,7 +93,7 @@ class ContextIntegrationTests {
         Integer assetId = createAsset("INT-ROLLBACK");
         String order = createOrder("corrective", assetId, null, null);
 
-        mockMvc.perform(post(order + "/start")
+        mockMvc.perform(post(order + "/starts")
                         .header("Authorization", technician))
                 .andExpect(status().isOk());
 
@@ -137,7 +137,7 @@ class ContextIntegrationTests {
     }
 
     private void complete(String order) throws Exception {
-        mockMvc.perform(post(order + "/completion").header("Authorization", technician)
+        mockMvc.perform(post(order + "/completions").header("Authorization", technician)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"solution\":\"Listo\"}"))
                 .andExpect(jsonPath("$.status").value("completed"));
     }
@@ -160,7 +160,7 @@ class ContextIntegrationTests {
     }
 
     private String tokenFor(String email) throws Exception {
-        var response = mockMvc.perform(post("/api/v1/authentication/sign-in").contentType(MediaType.APPLICATION_JSON)
+        var response = mockMvc.perform(post("/api/v1/authentications/sign-ins").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
                 .andReturn().getResponse().getContentAsString();
         return "Bearer " + JsonPath.read(response, "$.token");

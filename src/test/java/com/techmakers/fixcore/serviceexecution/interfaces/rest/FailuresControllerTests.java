@@ -67,13 +67,13 @@ class FailuresControllerTests {
                 .andReturn().getResponse().getContentAsString();
         String failure = FAILURES + "/" + JsonPath.<Integer>read(created, "$.id");
 
-        mockMvc.perform(patch(failure + "/priority").header("Authorization", plantManager)
+        mockMvc.perform(patch(failure + "/priorities").header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"priority\":\"high\"}"))
                 .andExpect(jsonPath("$.priority").value("high"));
-        mockMvc.perform(post(failure + "/resolution").header("Authorization", plantManager))
+        mockMvc.perform(post(failure + "/resolutions").header("Authorization", plantManager))
                 .andExpect(jsonPath("$.status").value("resolved"))
                 .andExpect(jsonPath("$.resolvedAt").isNotEmpty());
-        mockMvc.perform(patch(failure + "/priority").header("Authorization", plantManager)
+        mockMvc.perform(patch(failure + "/priorities").header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"priority\":\"low\"}"))
                 .andExpect(status().isConflict());
     }
@@ -90,7 +90,7 @@ class FailuresControllerTests {
                         .contentType(MediaType.APPLICATION_JSON).content(body(compressorId, "jam", true)))
                 .andExpect(jsonPath("$.priority").value("critical"))
                 .andReturn().getResponse().getContentAsString();
-        mockMvc.perform(patch(FAILURES + "/" + JsonPath.<Integer>read(stopped, "$.id") + "/priority")
+        mockMvc.perform(patch(FAILURES + "/" + JsonPath.<Integer>read(stopped, "$.id") + "/priorities")
                         .header("Authorization", technician)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"priority\":\"low\"}"))
                 .andExpect(status().isForbidden());
@@ -147,7 +147,7 @@ class FailuresControllerTests {
                         .header("Authorization", plantManager))
                 .andExpect(jsonPath("$.status").value("down"));
 
-        mockMvc.perform(post(FAILURES + "/" + firstId + "/resolution")
+        mockMvc.perform(post(FAILURES + "/" + firstId + "/resolutions")
                         .header("Authorization", plantManager))
                 .andExpect(status().isOk());
 
@@ -155,7 +155,7 @@ class FailuresControllerTests {
                         .header("Authorization", plantManager))
                 .andExpect(jsonPath("$.status").value("down"));
 
-        mockMvc.perform(post(FAILURES + "/" + secondId + "/resolution")
+        mockMvc.perform(post(FAILURES + "/" + secondId + "/resolutions")
                         .header("Authorization", plantManager))
                 .andExpect(status().isOk());
 
@@ -174,7 +174,7 @@ class FailuresControllerTests {
     }
 
     private String tokenFor(String email) throws Exception {
-        var response = mockMvc.perform(post("/api/v1/authentication/sign-in").contentType(MediaType.APPLICATION_JSON)
+        var response = mockMvc.perform(post("/api/v1/authentications/sign-ins").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
                 .andReturn().getResponse().getContentAsString();
         return "Bearer " + JsonPath.read(response, "$.token");

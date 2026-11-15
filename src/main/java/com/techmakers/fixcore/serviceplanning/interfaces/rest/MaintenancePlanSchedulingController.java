@@ -28,7 +28,7 @@ public class MaintenancePlanSchedulingController {
         this.planCommandService = planCommandService;
     }
 
-    @PatchMapping("/schedule")
+    @PatchMapping("/schedules")
     @PreAuthorize("hasRole('PLANT_MANAGER')")
     @Operation(summary = "Move the next due date of a plan")
     public ResponseEntity<MaintenancePlanResource> reschedule(@PathVariable Long planId,
@@ -37,7 +37,7 @@ public class MaintenancePlanSchedulingController {
         return ResponseEntity.ok(MaintenancePlanResourceAssembler.toResource(plan));
     }
 
-    @PostMapping("/suspension")
+    @PostMapping("/suspensions")
     @PreAuthorize("hasRole('PLANT_MANAGER')")
     @Operation(summary = "Suspend a plan")
     public ResponseEntity<MaintenancePlanResource> suspend(@PathVariable Long planId) {
@@ -45,7 +45,7 @@ public class MaintenancePlanSchedulingController {
         return ResponseEntity.ok(MaintenancePlanResourceAssembler.toResource(plan));
     }
 
-    @PostMapping("/reactivation")
+    @PostMapping("/reactivations")
     @PreAuthorize("hasRole('PLANT_MANAGER')")
     @Operation(summary = "Reactivate a suspended plan")
     public ResponseEntity<MaintenancePlanResource> reactivate(@PathVariable Long planId) {

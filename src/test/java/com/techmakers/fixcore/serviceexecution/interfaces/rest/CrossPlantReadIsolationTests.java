@@ -155,7 +155,7 @@ class CrossPlantReadIsolationTests {
     }
 
     private String tokenFor(String email) throws Exception {
-        var json = mockMvc.perform(post("/api/v1/authentication/sign-in")
+        var json = mockMvc.perform(post("/api/v1/authentications/sign-ins")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
                 .andExpect(status().isOk())

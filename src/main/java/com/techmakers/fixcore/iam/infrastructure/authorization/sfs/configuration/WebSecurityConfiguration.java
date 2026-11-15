@@ -22,7 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class WebSecurityConfiguration {
 
     private static final String[] PUBLIC_PATHS = {
-            "/api/v1/authentication/sign-in",
+            "/api/v1/authentications/sign-ins",
             "/actuator/health/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",

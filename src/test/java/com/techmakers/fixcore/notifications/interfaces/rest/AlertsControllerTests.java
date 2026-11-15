@@ -71,7 +71,7 @@ class AlertsControllerTests {
         var alertId = ids.get(0);
 
         var beforeResponse = mockMvc.perform(
-                        get(ALERTS + "/unread-count")
+                        get(ALERTS + "/unread-counts")
                                 .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
@@ -80,7 +80,7 @@ class AlertsControllerTests {
                 beforeResponse, "$.unread")).intValue();
 
         mockMvc.perform(
-                        patch(ALERTS + "/{alertId}/read", alertId)
+                        patch(ALERTS + "/{alertId}/reads", alertId)
                                 .header("Authorization", token))
                 .andExpect(status().isNoContent());
 
@@ -94,7 +94,7 @@ class AlertsControllerTests {
         assertThat(flags).containsExactly(true);
 
         var afterResponse = mockMvc.perform(
-                        get(ALERTS + "/unread-count")
+                        get(ALERTS + "/unread-counts")
                                 .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
@@ -105,7 +105,7 @@ class AlertsControllerTests {
         assertThat(after).isEqualTo(before - 1);
 
         mockMvc.perform(
-                        patch(ALERTS + "/{alertId}/read", alertId)
+                        patch(ALERTS + "/{alertId}/reads", alertId)
                                 .header("Authorization", token))
                 .andExpect(status().isNoContent());
     }
@@ -120,7 +120,7 @@ class AlertsControllerTests {
         assertThat(ids).isNotEmpty();
 
         mockMvc.perform(
-                        patch(ALERTS + "/{alertId}/read", ids.get(0))
+                        patch(ALERTS + "/{alertId}/reads", ids.get(0))
                                 .header("Authorization",
                                         tokenFor("carla.garcia@fixcore.demo")))
                 .andExpect(status().isNotFound());
@@ -132,7 +132,7 @@ class AlertsControllerTests {
     }
 
     private String tokenFor(String email) throws Exception {
-        var response = mockMvc.perform(post("/api/v1/authentication/sign-in").contentType(MediaType.APPLICATION_JSON)
+        var response = mockMvc.perform(post("/api/v1/authentications/sign-ins").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
                 .andReturn().getResponse().getContentAsString();
         return "Bearer " + JsonPath.read(response, "$.token");

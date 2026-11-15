@@ -63,16 +63,16 @@ class MaintenancePlansControllerTests {
         Integer id = JsonPath.read(created, "$.id");
         var plan = PLANS + "/" + id;
 
-        mockMvc.perform(post(plan + "/suspension").header("Authorization", plantManager))
+        mockMvc.perform(post(plan + "/suspensions").header("Authorization", plantManager))
                 .andExpect(jsonPath("$.standing").value("suspended"));
-        mockMvc.perform(post(plan + "/reactivation").header("Authorization", plantManager))
+        mockMvc.perform(post(plan + "/reactivations").header("Authorization", plantManager))
                 .andExpect(jsonPath("$.active").value(true));
         mockMvc.perform(post(plan + "/completions").header("Authorization", technician)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"completedOn\":\"2026-10-20\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lastCompletedAt").value("2026-10-20"))
                 .andExpect(jsonPath("$.nextDueDate").value("2026-11-19"));
-        mockMvc.perform(patch(plan + "/schedule").header("Authorization", plantManager)
+        mockMvc.perform(patch(plan + "/schedules").header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"nextDueDate\":\"2026-12-01\"}"))
                 .andExpect(jsonPath("$.nextDueDate").value("2026-12-01"));
         mockMvc.perform(delete(plan).header("Authorization", plantManager))
@@ -189,7 +189,7 @@ class MaintenancePlansControllerTests {
 
         Integer planId = JsonPath.read(created, "$.id");
 
-        mockMvc.perform(post(PLANS + "/" + planId + "/suspension")
+        mockMvc.perform(post(PLANS + "/" + planId + "/suspensions")
                         .header("Authorization", plantManager))
                 .andExpect(status().isOk());
 
@@ -212,7 +212,7 @@ class MaintenancePlansControllerTests {
     }
 
     private String tokenFor(String email) throws Exception {
-        var response = mockMvc.perform(post("/api/v1/authentication/sign-in").contentType(MediaType.APPLICATION_JSON)
+        var response = mockMvc.perform(post("/api/v1/authentications/sign-ins").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
                 .andReturn().getResponse().getContentAsString();
         return "Bearer " + JsonPath.read(response, "$.token");

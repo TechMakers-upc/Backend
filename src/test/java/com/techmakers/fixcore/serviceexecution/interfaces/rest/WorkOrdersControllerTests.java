@@ -74,10 +74,10 @@ class WorkOrdersControllerTests {
         mockMvc.perform(get("/api/v1/failures/" + failureId).header("Authorization", plantManager))
                 .andExpect(jsonPath("$.status").value("in-progress"));
 
-        mockMvc.perform(post(order + "/start").header("Authorization", technician)).andExpect(status().isForbidden());
-        mockMvc.perform(patch(order + "/assignment").header("Authorization", plantManager)
+        mockMvc.perform(post(order + "/starts").header("Authorization", technician)).andExpect(status().isForbidden());
+        mockMvc.perform(patch(order + "/assignments").header("Authorization", plantManager)
                 .contentType(MediaType.APPLICATION_JSON).content("{\"technicianId\":%d}".formatted(technicianId)));
-        mockMvc.perform(post(order + "/start").header("Authorization", technician))
+        mockMvc.perform(post(order + "/starts").header("Authorization", technician))
                 .andExpect(jsonPath("$.status").value("in-progress"));
         mockMvc.perform(post(order + "/work-logs").header("Authorization", technician)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"note\":\"Se cambió el sello\"}"))
@@ -86,7 +86,7 @@ class WorkOrdersControllerTests {
         mockMvc.perform(post(order + "/part-usages").header("Authorization", technician)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"partId\":%d,\"quantity\":1}".formatted(bearing)))
                 .andExpect(jsonPath("$.partsUsed[0].partId").value(bearing));
-        mockMvc.perform(post(order + "/completion").header("Authorization", technician)
+        mockMvc.perform(post(order + "/completions").header("Authorization", technician)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"solution\":\"Sello reemplazado\"}"))
                 .andExpect(jsonPath("$.status").value("completed"));
         mockMvc.perform(get("/api/v1/failures/" + failureId).header("Authorization", plantManager))
@@ -143,7 +143,7 @@ class WorkOrdersControllerTests {
         Integer other = idOf(ORDERS, "$[?(@.code == 'OT-2026-0010')].id");
         String url = ORDERS + "/" + other;
 
-        mockMvc.perform(post(url + "/start")
+        mockMvc.perform(post(url + "/starts")
                         .header("Authorization", technician))
                 .andExpect(status().isForbidden());
 
@@ -159,7 +159,7 @@ class WorkOrdersControllerTests {
                         .content("{\"partId\":1,\"quantity\":1}"))
                 .andExpect(status().isForbidden());
 
-        mockMvc.perform(post(url + "/completion")
+        mockMvc.perform(post(url + "/completions")
                         .header("Authorization", technician)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"solution\":\"Cierre no autorizado\"}"))
@@ -181,7 +181,7 @@ class WorkOrdersControllerTests {
 
         Integer pending = idOf(ORDERS, "$[?(@.code == 'OT-2026-0011')].id");
 
-        mockMvc.perform(patch(ORDERS + "/" + pending + "/assignment")
+        mockMvc.perform(patch(ORDERS + "/" + pending + "/assignments")
                         .header("Authorization", plantManager)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"technicianId\":%d}".formatted(rosaId)))
@@ -218,7 +218,7 @@ class WorkOrdersControllerTests {
     }
 
     private String tokenFor(String email) throws Exception {
-        var response = mockMvc.perform(post("/api/v1/authentication/sign-in").contentType(MediaType.APPLICATION_JSON)
+        var response = mockMvc.perform(post("/api/v1/authentications/sign-ins").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"FixCore2026\"}".formatted(email)))
                 .andReturn().getResponse().getContentAsString();
         return "Bearer " + JsonPath.read(response, "$.token");
