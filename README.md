@@ -192,3 +192,5 @@ We follow Gitflow. Work starts from `develop` on a `feature/*` branch, is pushed
 ## 12. Team
 
 **TechMakers** — Universidad Peruana de Ciencias Aplicadas (UPC), Open Source Applications course.
+
+<!-- Backend documentation reviewed -->
